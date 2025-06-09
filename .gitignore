@@ -1,0 +1,51 @@
+## Build results
+bin/
+obj/
+out/
+
+## User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## OS-specific files
+.DS_Store
+Thumbs.db
+
+## Rider / VS Code
+.idea/
+.vscode/
+*.code-workspace
+
+## Logs
+*.log
+
+## ASP.NET Core
+appsettings.Development.json
+appsettings.Local.json
+appsettings.*.json
+
+## Environment secrets
+.env
+*.secret.json
+
+## NuGet
+*.nupkg
+packages/
+.nuget/
+
+## dotCover
+*.dotCover
+
+## Backup & crash reports
+*.bak
+*.swp
+*.tmp
+
+## Others
+*.db
+*.sqlite
+
+# Ignore test results
+TestResults/
