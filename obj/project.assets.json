@@ -1757,24 +1757,31 @@
     ]
   },
   "packageFolders": {
-    "/home/tess/.nuget/packages/": {}
+    "C:\\Users\\Dell\\.nuget\\packages\\": {},
+    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/home/tess/alumni-connect-frontend/AlumniConnect.Front/AlumniConnect.Front.csproj",
+      "projectUniqueName": "D:\\Landing page\\AlumniConnect.Front.csproj",
       "projectName": "AlumniConnect.Front",
-      "projectPath": "/home/tess/alumni-connect-frontend/AlumniConnect.Front/AlumniConnect.Front.csproj",
-      "packagesPath": "/home/tess/.nuget/packages/",
-      "outputPath": "/home/tess/alumni-connect-frontend/AlumniConnect.Front/obj/",
+      "projectPath": "D:\\Landing page\\AlumniConnect.Front.csproj",
+      "packagesPath": "C:\\Users\\Dell\\.nuget\\packages\\",
+      "outputPath": "D:\\Landing page\\obj\\",
       "projectStyle": "PackageReference",
+      "fallbackFolders": [
+        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+      ],
       "configFilePaths": [
-        "/home/tess/.nuget/NuGet/NuGet.Config"
+        "C:\\Users\\Dell\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
         "net9.0"
       ],
       "sources": {
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
@@ -1843,7 +1850,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "/home/tess/.dotnet/sdk/9.0.203/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.203/PortableRuntimeIdentifierGraph.json"
       }
     },
     "runtimes": {
