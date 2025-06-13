@@ -1,7 +1,11 @@
 ## Build results
 bin/
 obj/
-out/
+*.dll
+*.pdb
+*.wasm
+*.json.gz
+*.cache
 
 ## User-specific files
 *.user
