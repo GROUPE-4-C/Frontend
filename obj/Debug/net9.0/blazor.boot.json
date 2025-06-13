@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "AlumniConnect.Front",
   "resources": {
-    "hash": "sha256-D7MMct/y0qNkUakO9pKdWmLvkb/BOj6KfhrYIfvy2HA=",
+    "hash": "sha256-vNKd+D8wSyHNHzAf53fcgLhiYN9+cjgmhiSv3+cqBJM=",
     "fingerprinting": {
       "Microsoft.AspNetCore.Authorization.gf26ou9jj9.wasm": "Microsoft.AspNetCore.Authorization.wasm",
       "Microsoft.AspNetCore.Components.v3fd2n5hlr.wasm": "Microsoft.AspNetCore.Components.wasm",
@@ -195,23 +195,23 @@
       "netstandard.d82br99ghv.wasm": "netstandard.wasm",
       "System.Private.CoreLib.wejp19zmu1.wasm": "System.Private.CoreLib.wasm",
       "dotnet.js": "dotnet.js",
-      "dotnet.native.hvg7u8bimp.js": "dotnet.native.js",
-      "dotnet.native.3c4wvb350q.wasm": "dotnet.native.wasm",
-      "dotnet.runtime.cymp1amu5g.js": "dotnet.runtime.js",
+      "dotnet.native.rtblh4npr3.js": "dotnet.native.js",
+      "dotnet.native.aqhezbunpl.wasm": "dotnet.native.wasm",
+      "dotnet.runtime.d1pzlaz2ez.js": "dotnet.runtime.js",
       "icudt_CJK.tjcz0u77k5.dat": "icudt_CJK.dat",
       "icudt_EFIGS.tptq2av103.dat": "icudt_EFIGS.dat",
       "icudt_no_CJK.lfu7j35m59.dat": "icudt_no_CJK.dat",
-      "AlumniConnect.Front.7qn88zo8ws.wasm": "AlumniConnect.Front.wasm",
-      "AlumniConnect.Front.d143k2eukv.pdb": "AlumniConnect.Front.pdb"
+      "AlumniConnect.Front.u6kj47gvba.wasm": "AlumniConnect.Front.wasm",
+      "AlumniConnect.Front.da8tmlim5k.pdb": "AlumniConnect.Front.pdb"
     },
     "jsModuleNative": {
-      "dotnet.native.hvg7u8bimp.js": "sha256-LX9rFEWGVxhkOkAVPG0w5RxPwzPBlEUz6dQNjWS7M+M="
+      "dotnet.native.rtblh4npr3.js": "sha256-HyBzcYNpT2l19+f1bpjNOa1oFoLe3K4JIQ6GsFK5m6I="
     },
     "jsModuleRuntime": {
-      "dotnet.runtime.cymp1amu5g.js": "sha256-dCmS9Zx4egtLYSUgTI3R6gMS+Yg8MkzxW1CgEMJKAEw="
+      "dotnet.runtime.d1pzlaz2ez.js": "sha256-gbZjXNFbH7V8lcix+H0TUDJHLeFUA3n3IMu7fLh4D80="
     },
     "wasmNative": {
-      "dotnet.native.3c4wvb350q.wasm": "sha256-89jyB8DlCnV2BPMV477jOe1Sm0WXwVf8RuoSPsj4Ym8="
+      "dotnet.native.aqhezbunpl.wasm": "sha256-QgAJsJSEDZ9XA0g3PW3EffgXg+ymMp2uRhGnkVsOxQY="
     },
     "icu": {
       "icudt_CJK.tjcz0u77k5.dat": "sha256-SZLtQnRc0JkwqHab0VUVP7T3uBPSeYzxzDnpxPpUnHk=",
@@ -412,10 +412,10 @@
       "WindowsBase.5lai2eowco.wasm": "sha256-GcDi5293y2A7oSiFYTbBTUe0d+ISbvgeel4ZNd8KkPM=",
       "mscorlib.wzkfrp7u5k.wasm": "sha256-9PjsU0gaxxz5Vyw++p9DeYUWLsaXbaMS2RbX6wmTUmk=",
       "netstandard.d82br99ghv.wasm": "sha256-DS8keXxU4eQpa1kIoiFxOA2Ii2g9hoNWSaVi8F8AnIE=",
-      "AlumniConnect.Front.7qn88zo8ws.wasm": "sha256-4eF88+laJcXMc18EPdWzp98R8BTjpQtHIazlr4xT+8U="
+      "AlumniConnect.Front.u6kj47gvba.wasm": "sha256-9qwc34xnmdQ0GMzsoMWngQ1qto17Ly4Es8okbXfqNzU="
     },
     "pdb": {
-      "AlumniConnect.Front.d143k2eukv.pdb": "sha256-MXNGW/EEzXYy1+3YfY/8l9De1MrSW1xOtYU1+KdDL9M="
+      "AlumniConnect.Front.da8tmlim5k.pdb": "sha256-Nbnldx7jYFUzmn2uobjrZjc1SDvkQXX+L2MV5qOYv/A="
     }
   },
   "cacheBootResources": true,
