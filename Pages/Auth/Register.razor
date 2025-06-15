@@ -1,0 +1,374 @@
+@page "/register"
+@layout MainLayout
+
+<link href="css/auth.css" rel="stylesheet" />
+
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h2>Inscription</h2>
+            <p>Rejoignez la communauté AlumniConnect</p>
+        </div>
+
+        <!-- Indicateur d'étapes -->
+        <div class="step-indicator @(currentStep == 2 ? "step-2" : "")">
+            <div class="step-item @(currentStep >= 1 ? "active" : "") @(currentStep > 1 ? "completed" : "")">
+                <div class="step-number">
+                    @if (currentStep > 1)
+                    {
+                        <span>✓</span>
+                    }
+                    else
+                    {
+                        <span>1</span>
+                    }
+                </div>
+                <div class="step-label">Informations personnelles</div>
+            </div>
+            <div class="step-item @(currentStep >= 2 ? "active" : "")">
+                <div class="step-number">2</div>
+                <div class="step-label">Sécurité</div>
+            </div>
+        </div>
+
+        <EditForm Model="registerModel" OnValidSubmit="HandleSubmit">
+            <DataAnnotationsValidator />
+
+            @if (errors.Any())
+            {
+                <div class="alert alert-danger">
+                    @foreach (var error in errors)
+                    {
+                        <p>@error</p>
+                    }
+                </div>
+            }
+
+            @if (showSuccess)
+            {
+                <div class="alert alert-success">
+                    <p>Inscription réussie ! Vérifiez votre email pour le code de confirmation.</p>
+                </div>
+            }
+
+            <!-- Étape 1: Informations personnelles -->
+            <div class="step-content @(currentStep == 1 ? "active" : "")">
+                <h3 class="step-title">Parlez-nous de vous</h3>
+                <p class="step-subtitle">Ces informations nous aident à mieux vous connaître</p>
+
+                <div class="form-group">
+                    <label for="fullName">Nom complet *</label>
+                    <InputText id="fullName" class="form-control" @bind-Value="registerModel.FullName" placeholder="Votre nom complet" />
+                    <ValidationMessage For="@(() => registerModel.FullName)" />
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="email">Email *</label>
+                        <InputText id="email" type="email" class="form-control" @bind-Value="registerModel.Email" placeholder="votre@email.com" />
+                        <ValidationMessage For="@(() => registerModel.Email)" />
+                    </div>
+                    <div class="form-group">
+                        <label for="phoneNumber">Téléphone</label>
+                        <InputText id="phoneNumber" type="tel" class="form-control" @bind-Value="registerModel.PhoneNumber" placeholder="+228 XX XX XX XX" />
+                        <ValidationMessage For="@(() => registerModel.PhoneNumber)" />
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="profession">Profession *</label>
+                        <InputText id="profession" class="form-control" @bind-Value="registerModel.Profession" placeholder="Votre profession" />
+                        <ValidationMessage For="@(() => registerModel.Profession)" />
+                    </div>
+                    <div class="form-group">
+                        <label for="promotionId">Promotion *</label>
+                        <InputSelect id="promotionId" class="form-control" @bind-Value="registerModel.PromotionId">
+                            <option value="0">Sélectionnez votre promotion</option>
+                            <option value="1">Promotion 2020</option>
+                            <option value="2">Promotion 2021</option>
+                            <option value="3">Promotion 2022</option>
+                            <option value="4">Promotion 2023</option>
+                            <option value="5">Promotion 2024</option>
+                        </InputSelect>
+                        <ValidationMessage For="@(() => registerModel.PromotionId)" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="photo">Photo de profil (optionnel)</label>
+                    <div class="photo-upload-section">
+                        @if (!string.IsNullOrEmpty(photoPreview))
+                        {
+                            <div class="photo-preview">
+                                <img src="@photoPreview" alt="Aperçu photo" />
+                                <button type="button" class="remove-photo-btn" @onclick="RemovePhoto">
+                                    ✕
+                                </button>
+                            </div>
+                        }
+                        <InputFile id="photo" class="form-control file-input" OnChange="OnPhotoSelected" accept="image/*" />
+                        <small class="form-text">Formats acceptés : JPG, PNG, GIF (max 5MB)</small>
+                    </div>
+                </div>
+
+                <div class="step-buttons">
+                    <button type="button" class="btn btn-primary btn-full" @onclick="NextStep">
+                        Suivant
+                    </button>
+                </div>
+            </div>
+
+            <!-- Étape 2: Sécurité -->
+            <div class="step-content @(currentStep == 2 ? "active" : "")">
+                <h3 class="step-title">Sécurisez votre compte</h3>
+                <p class="step-subtitle">Choisissez un mot de passe fort pour protéger votre compte</p>
+
+                <div class="form-group">
+                    <label for="password">Mot de passe *</label>
+                    <InputText id="password" type="password" class="form-control" @bind-Value="registerModel.Password" placeholder="Votre mot de passe" />
+                    <ValidationMessage For="@(() => registerModel.Password)" />
+                    <small class="form-text">Au moins 6 caractères</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword">Confirmer le mot de passe *</label>
+                    <InputText id="confirmPassword" type="password" class="form-control" @bind-Value="registerModel.ConfirmPassword" placeholder="Confirmez votre mot de passe" />
+                    <ValidationMessage For="@(() => registerModel.ConfirmPassword)" />
+                </div>
+
+                <div class="step-buttons">
+                    <button type="button" class="btn btn-secondary btn-half" @onclick="PreviousStep">
+                        Précédent
+                    </button>
+                    <button type="submit" class="btn btn-primary btn-half" disabled="@isLoading">
+                        @if (isLoading)
+                        {
+                            <span class="spinner"></span>
+                            <span>Inscription...</span>
+                        }
+                        else
+                        {
+                            <span>S'inscrire</span>
+                        }
+                    </button>
+                </div>
+            </div>
+        </EditForm>
+
+        <div class="auth-footer">
+            <p>Déjà membre ? <a href="/login">Se connecter</a></p>
+        </div>
+    </div>
+</div>
+
+@inject NavigationManager Navigation
+@using System.ComponentModel.DataAnnotations
+
+@code {
+    private RegisterModel registerModel = new();
+    private List<string> errors = new();
+    private bool isLoading = false;
+    private bool showSuccess = false;
+    private string? photoPreview;
+    private string? photoBase64;
+    private int currentStep = 1;
+
+    private void NextStep()
+    {
+        errors.Clear();
+
+        // Validation de l'étape 1
+        if (!ValidateStep1())
+        {
+            return;
+        }
+
+        currentStep = 2;
+        StateHasChanged();
+    }
+
+    private void PreviousStep()
+    {
+        errors.Clear();
+        currentStep = 1;
+        StateHasChanged();
+    }
+
+    private bool ValidateStep1()
+    {
+        var stepErrors = new List<string>();
+
+        if (string.IsNullOrWhiteSpace(registerModel.FullName))
+            stepErrors.Add("Le nom complet est requis.");
+
+        if (string.IsNullOrWhiteSpace(registerModel.Email))
+            stepErrors.Add("L'email est requis.");
+        else if (!IsValidEmail(registerModel.Email))
+            stepErrors.Add("Format d'email invalide.");
+
+        if (string.IsNullOrWhiteSpace(registerModel.Profession))
+            stepErrors.Add("La profession est requise.");
+
+        if (registerModel.PromotionId == 0)
+            stepErrors.Add("Veuillez sélectionner une promotion.");
+
+        if (!string.IsNullOrEmpty(registerModel.PhoneNumber) && !IsValidPhone(registerModel.PhoneNumber))
+            stepErrors.Add("Format de téléphone invalide.");
+
+        if (stepErrors.Any())
+        {
+            errors.AddRange(stepErrors);
+            return false;
+        }
+
+        return true;
+    }
+
+    private bool IsValidEmail(string email)
+    {
+        try
+        {
+            var addr = new System.Net.Mail.MailAddress(email);
+            return addr.Address == email;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private bool IsValidPhone(string phone)
+    {
+        return phone.All(c => char.IsDigit(c) || c == '+' || c == ' ' || c == '-' || c == '(' || c == ')');
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (currentStep == 1)
+        {
+            NextStep();
+            return;
+        }
+
+        await HandleRegister();
+    }
+
+    private async Task OnPhotoSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file != null)
+        {
+            if (file.Size > 5 * 1024 * 1024)
+            {
+                errors.Add("La photo ne doit pas dépasser 5MB.");
+                return;
+            }
+
+            if (!file.ContentType.StartsWith("image/"))
+            {
+                errors.Add("Seuls les fichiers image sont acceptés.");
+                return;
+            }
+
+            try
+            {
+                using var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
+                using var memoryStream = new MemoryStream();
+                await stream.CopyToAsync(memoryStream);
+
+                var bytes = memoryStream.ToArray();
+                photoBase64 = Convert.ToBase64String(bytes);
+                photoPreview = $"data:{file.ContentType};base64,{photoBase64}";
+
+                registerModel.PhotoUrl = photoPreview;
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                errors.Add($"Erreur lors du chargement de la photo: {ex.Message}");
+            }
+        }
+    }
+
+    private void RemovePhoto()
+    {
+        photoPreview = null;
+        photoBase64 = null;
+        registerModel.PhotoUrl = null;
+        StateHasChanged();
+    }
+
+    private async Task HandleRegister()
+    {
+        isLoading = true;
+        errors.Clear();
+        showSuccess = false;
+
+        try
+        {
+            // Validation côté client
+            if (registerModel.Password != registerModel.ConfirmPassword)
+            {
+                errors.Add("Les mots de passe ne correspondent pas.");
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(registerModel.Password) || registerModel.Password.Length < 6)
+            {
+                errors.Add("Le mot de passe doit contenir au moins 6 caractères.");
+                return;
+            }
+
+            // Ici vous pouvez appeler votre service API
+            // var result = await AuthService.RegisterAsync(registerModel);
+
+            // Simulation d'un appel API
+            await Task.Delay(2000);
+
+            // Simulation de succès
+            showSuccess = true;
+
+            // Redirection vers la page de confirmation après 2 secondes
+            await Task.Delay(2000);
+            Navigation.NavigateTo($"/confirm-email?email={Uri.EscapeDataString(registerModel.Email)}");
+        }
+        catch (Exception ex)
+        {
+            errors.Add($"Erreur lors de l'inscription: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    public class RegisterModel
+    {
+        [Required(ErrorMessage = "Le nom complet est requis")]
+        public string FullName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "L'email est requis")]
+        [EmailAddress(ErrorMessage = "Format d'email invalide")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "La profession est requise")]
+        public string Profession { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "La promotion est requise")]
+        [Range(1, int.MaxValue, ErrorMessage = "Veuillez sélectionner une promotion")]
+        public int PromotionId { get; set; }
+
+        [Phone(ErrorMessage = "Format de téléphone invalide")]
+        public string? PhoneNumber { get; set; }
+
+        public string? PhotoUrl { get; set; }
+
+        [Required(ErrorMessage = "Le mot de passe est requis")]
+        [MinLength(6, ErrorMessage = "Le mot de passe doit contenir au moins 6 caractères")]
+        public string Password { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "La confirmation du mot de passe est requise")]
+        public string ConfirmPassword { get; set; } = string.Empty;
+    }
+}

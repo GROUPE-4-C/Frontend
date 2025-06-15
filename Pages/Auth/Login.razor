@@ -1,0 +1,106 @@
+@page "/login"
+@layout MainLayout
+
+<link href="css/auth.css" rel="stylesheet" />
+
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h2>Connexion</h2>
+            <p>Connectez-vous à votre compte AlumniConnect</p>
+        </div>
+
+        <EditForm Model="loginModel" OnValidSubmit="HandleLogin">
+            <DataAnnotationsValidator />
+
+            @if (errors.Any())
+            {
+                <div class="alert alert-danger">
+                    @foreach (var error in errors)
+                    {
+                        <p>@error</p>
+                    }
+                </div>
+            }
+
+            <div class="form-group">
+                <label for="email">Email</label>
+                <InputText id="email" type="email" class="form-control" @bind-Value="loginModel.Email" placeholder="votre@email.com" />
+                <ValidationMessage For="@(() => loginModel.Email)" />
+            </div>
+
+            <div class="form-group">
+                <label for="password">Mot de passe</label>
+                <InputText id="password" type="password" class="form-control" @bind-Value="loginModel.Password" placeholder="Votre mot de passe" />
+                <ValidationMessage For="@(() => loginModel.Password)" />
+            </div>
+
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary btn-full" disabled="@isLoading">
+                    @if (isLoading)
+                    {
+                        <span class="spinner"></span>
+                        <span>Connexion en cours...</span>
+                    }
+                    else
+                    {
+                        <span>Se connecter</span>
+                    }
+                </button>
+            </div>
+        </EditForm>
+
+        <div class="auth-links">
+            <a href="/forgot-password">Mot de passe oublié ?</a>
+        </div>
+
+        <div class="auth-footer">
+            <p>Pas encore membre ? <a href="/register">S'inscrire</a></p>
+        </div>
+    </div>
+</div>
+
+@inject NavigationManager Navigation
+@using System.ComponentModel.DataAnnotations
+
+@code {
+    private LoginModel loginModel = new();
+    private List<string> errors = new();
+    private bool isLoading = false;
+
+    private async Task HandleLogin()
+    {
+        isLoading = true;
+        errors.Clear();
+
+        try
+        {
+            // Ici vous pouvez appeler votre service API
+            // var result = await AuthService.LoginAsync(loginModel);
+
+            // Simulation d'un appel API
+            await Task.Delay(2000);
+
+            // Simulation de succès - redirection vers dashboard
+            Navigation.NavigateTo("/dashboard");
+        }
+        catch (Exception ex)
+        {
+            errors.Add($"Erreur lors de la connexion: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    public class LoginModel
+    {
+        [Required(ErrorMessage = "L'email est requis")]
+        [EmailAddress(ErrorMessage = "Format d'email invalide")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Le mot de passe est requis")]
+        public string Password { get; set; } = string.Empty;
+    }
+}
