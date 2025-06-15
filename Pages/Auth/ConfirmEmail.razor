@@ -1,0 +1,161 @@
+@page "/confirm-email"
+@layout MainLayout
+
+<link href="css/auth.css" rel="stylesheet" />
+
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h2>Confirmation d'email</h2>
+            <p>Entrez le code de vérification envoyé à votre email</p>
+            @if (!string.IsNullOrEmpty(Email))
+            {
+                <p><strong>@Email</strong></p>
+            }
+        </div>
+
+        <EditForm Model="confirmModel" OnValidSubmit="HandleConfirmEmail">
+            <DataAnnotationsValidator />
+
+            @if (errors.Any())
+            {
+                <div class="alert alert-danger">
+                    @foreach (var error in errors)
+                    {
+                        <p>@error</p>
+                    }
+                </div>
+            }
+
+            @if (showSuccess)
+            {
+                <div class="alert alert-success">
+                    <p>Email confirmé avec succès ! Vous pouvez maintenant vous connecter.</p>
+                </div>
+            }
+
+            <div class="form-group">
+                <label for="email">Email</label>
+                <InputText id="email" type="email" class="form-control" @bind-Value="confirmModel.Email" placeholder="votre@email.com" />
+                <ValidationMessage For="@(() => confirmModel.Email)" />
+            </div>
+
+            <div class="form-group">
+                <label for="token">Code de vérification</label>
+                <InputText id="token" class="form-control otp-input" @bind-Value="confirmModel.Token" placeholder="123456" maxlength="6" />
+                <ValidationMessage For="@(() => confirmModel.Token)" />
+                <small class="form-text">Code à 6 chiffres envoyé par email</small>
+            </div>
+
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary btn-full" disabled="@isLoading">
+                    @if (isLoading)
+                    {
+                        <span class="spinner"></span>
+                        <span>Vérification en cours...</span>
+                    }
+                    else
+                    {
+                        <span>Confirmer</span>
+                    }
+                </button>
+            </div>
+        </EditForm>
+
+        <div class="auth-links">
+            <button type="button" class="link-button" @onclick="HandleResendOtp" disabled="@isResending">
+                @if (isResending)
+                {
+                    <span class="spinner-small"></span>
+                    <span>Envoi en cours...</span>
+                }
+                else
+                {
+                    <span>Renvoyer le code</span>
+                }
+            </button>
+        </div>
+
+        <div class="auth-footer">
+            <p>Code reçu ? <a href="/login">Se connecter</a></p>
+        </div>
+    </div>
+</div>
+
+@inject NavigationManager Navigation
+@using System.ComponentModel.DataAnnotations
+
+@code {
+    [Parameter]
+    [SupplyParameterFromQuery]
+    public string? Email { get; set; }
+
+    private ConfirmEmailModel confirmModel = new();
+    private List<string> errors = new();
+    private bool isLoading = false;
+    private bool isResending = false;
+    private bool showSuccess = false;
+
+    protected override void OnInitialized()
+    {
+        if (!string.IsNullOrEmpty(Email))
+        {
+            confirmModel.Email = Email;
+        }
+    }
+
+    private async Task HandleConfirmEmail()
+    {
+        isLoading = true;
+        errors.Clear();
+        showSuccess = false;
+
+        try
+        {
+            await Task.Delay(2000);
+            showSuccess = true;
+
+            await Task.Delay(2000);
+            Navigation.NavigateTo("/login");
+        }
+        catch (Exception ex)
+        {
+            errors.Add($"Erreur lors de la confirmation: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task HandleResendOtp()
+    {
+        isResending = true;
+        errors.Clear();
+
+        try
+        {
+            await Task.Delay(1000);
+            errors.Add("Code renvoyé avec succès !");
+        }
+        catch (Exception ex)
+        {
+            errors.Add($"Erreur lors du renvoi: {ex.Message}");
+        }
+        finally
+        {
+            isResending = false;
+        }
+    }
+
+    public class ConfirmEmailModel
+    {
+        [Required(ErrorMessage = "L'email est requis")]
+        [EmailAddress(ErrorMessage = "Format d'email invalide")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Le code de vérification est requis")]
+        [StringLength(6, MinimumLength = 6, ErrorMessage = "Le code doit contenir exactement 6 caractères")]
+        public string Token { get; set; } = string.Empty;
+    }
+}
