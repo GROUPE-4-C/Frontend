@@ -1,0 +1,171 @@
+﻿@page "/dashboard"
+@layout MainLayout
+
+<link href="css/dashboard.css" rel="stylesheet" />
+
+<!-- Login Modal Overlay -->
+<div class="login-overlay" id="loginOverlay">
+    <div class="login-modal">
+        <h3>🔐 Connexion requise</h3>
+        <p>Pour interagir avec la communauté AlumniConnect, vous devez vous connecter à votre compte.</p>
+        <div>
+            <a href="/Account/Login" class="btn btn-primary">
+                <i class="fas fa-sign-in-alt"></i>
+                Se connecter
+            </a>
+            <button class="btn btn-secondary" onclick="closeLoginModal()">
+                <i class="fas fa-times"></i>
+                Annuler
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Header -->
+<header class="header">
+    <div class="header-content">
+        <a href="#" class="logo">
+            <i class="fas fa-graduation-cap"></i>
+            AlumniConnect
+        </a>
+
+        <div class="search-bar">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="Rechercher des alumni, entreprises, postes..." onclick="requireLogin()">
+        </div>
+
+        <nav class="nav-menu">
+            <div class="nav-item active">
+                <i class="fas fa-home"></i>
+                <span class="nav-text">Accueil</span>
+            </div>
+            <div class="nav-item" onclick="requireLogin()">
+                <i class="fas fa-users"></i>
+                <span class="nav-text">Réseau</span>
+            </div>
+            <div class="nav-item" onclick="requireLogin()">
+                <i class="fas fa-briefcase"></i>
+                <span class="nav-text">Emplois</span>
+            </div>
+            <div class="nav-item" onclick="requireLogin()">
+                <i class="fas fa-star"></i>
+                <span class="nav-text">Témoignages</span>
+            </div>
+            <div class="nav-item" onclick="requireLogin()">
+                <i class="fas fa-calendar-alt"></i>
+                <span class="nav-text">Événements</span>
+            </div>
+            <div class="nav-item" onclick="requireLogin()">
+                <i class="fas fa-comment-dots"></i>
+                <span class="nav-text">Messages</span>
+            </div>
+            <div class="nav-item" onclick="requireLogin()">
+                <i class="fas fa-bell"></i>
+                <span class="nav-text">Notifications</span>
+            </div>
+            <a href="/login" class="login-btn">
+                <i class="fas fa-sign-in-alt"></i>
+                Se connecter
+            </a>
+        </nav>
+    </div>
+</header>
+
+<!-- Main Container -->
+<div class="main-container">
+    <!-- Welcome Card -->
+    <aside class="welcome-card">
+        <h3>👋 Bienvenue sur AlumniConnect</h3>
+        <p>Découvrez notre communauté d'alumni, parcourez les témoignages et les opportunités professionnelles.</p>
+        <a href="/Account/Login" class="login-cta">
+            <i class="fas fa-user-plus"></i>
+            Rejoindre la communauté
+        </a>
+    </aside>
+
+    <!-- Main Feed -->
+    <main class="main-feed">
+        <!-- Disabled Post Composer -->
+        <div class="post-composer disabled">
+            <div class="composer-input">
+                <div class="composer-avatar">?</div>
+                <input type="text" placeholder="Partagez vos dernières nouvelles avec le réseau..." disabled>
+            </div>
+
+            <div class="composer-actions">
+                <div class="composer-action photo">
+                    <i class="fas fa-image"></i>
+                    Photo
+                </div>
+                <div class="composer-action video">
+                    <i class="fas fa-video"></i>
+                    Vidéo
+                </div>
+                <div class="composer-action testimonial">
+                    <i class="fas fa-star"></i>
+                    Témoignage
+                </div>
+                <div class="composer-action event">
+                    <i class="fas fa-calendar-plus"></i>
+                    Événement
+                </div>
+                <div class="composer-action article">
+                    <i class="fas fa-newspaper"></i>
+                    Article
+                </div>
+            </div>
+        </div>
+
+        <!-- Testimonial Post -->
+        <article class="post testimonial-post">
+            <div class="post-header">
+                <div class="post-avatar" style="background: linear-gradient(135deg, #9f7aea, #805ad5);">TC</div>
+                <div class="post-author-info">
+                    <div class="post-author-name">Thomas Collin</div>
+                    <div class="post-author-title">Chef de projet • Promo 2017</div>
+                    <div class="post-time">
+                        <span>30min</span>
+                        <i class="fas fa-globe-americas"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="post-content">
+                <div class="testimonial-badge">
+                    <i class="fas fa-star"></i>
+                    Témoignage
+                </div>
+
+                ⭐ Je recommande vivement <strong>Sarah Lefebvre</strong> (Promo 2019) pour ses compétences exceptionnelles en développement web !
+                <br><br>
+                J'ai eu la chance de travailler avec Sarah sur plusieurs projets complexes. Sa maîtrise technique, sa capacité d'adaptation et son esprit d'équipe font d'elle une développeuse hors pair.
+                <br><br>
+                Sarah a notamment développé une solution innovante qui a permis d'augmenter les performances de notre application de 40%. Son professionnalisme et sa créativité sont remarquables.
+                <br><br>
+                <strong>Compétences clés :</strong> React, Node.js, Architecture cloud, Leadership technique
+                <br><br>
+                <strong>#Témoignage #Développement #React #AlumniRecommendation</strong>
+            </div>
+
+            <div class="post-stats">
+                <span>⭐ 23 réactions • 8 commentaires</span>
+                <span>5 partages</span>
+            </div>
+
+            <div class="post-actions disabled" onclick="requireLogin()">
+                <div class="post-action like">
+                    <i class="far fa-thumbs-up"></i>
+                    J'aime
+                </div>
+                <div class="post-action comment">
+                    <i class="far fa-comment"></i>
+                    Commenter
+                </div>
+                <div class="post-action share">
+                    <i class="fas fa-share"></i>
+                    Partager
+                </div>
+            </div> <!-- post-actions -->
+        </article>
+    </main>
+</div>
