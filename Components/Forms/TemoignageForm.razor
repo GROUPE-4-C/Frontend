@@ -1,0 +1,98 @@
+@using Microsoft.AspNetCore.Components.Forms
+@using AlumniConnect.Front.Models
+
+<div class="create-modal-overlay" id="@ModalId">
+    <div class="create-modal">
+        <div class="create-modal-header">
+            <h3 class="create-modal-title">
+                <i class="fas fa-star"></i>
+                @Title
+            </h3>
+            <button class="modal-close-btn" onclick="@($"closeModal('{ModalId}')")">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="create-modal-content">
+            <!-- Instructions -->
+            <div style="background: linear-gradient(135deg, rgba(159, 122, 234, 0.1), rgba(102, 126, 234, 0.1)); padding: 20px; border-radius: 12px; border-left: 4px solid #9f7aea; margin-bottom: 24px;">
+                <h4 style="color: #2d3748; margin-bottom: 12px;">💡 Quelques conseils pour un témoignage inspirant :</h4>
+                <ul style="color: #4a5568; margin: 0; padding-left: 20px; font-size: 13px;">
+                    <li>Partagez votre parcours professionnel depuis l'obtention du diplôme</li>
+                    <li>Mentionnez les défis rencontrés et comment vous les avez surmontés</li>
+                    <li>Donnez des conseils aux nouveaux diplômés</li>
+                    <li>N'hésitez pas à mentionner comment le réseau alumni vous a aidé</li>
+                </ul>
+            </div>
+
+            <EditForm Model="@TemoignageModel" OnValidSubmit="@HandleSubmit">
+                <DataAnnotationsValidator />
+
+                <div class="modal-form-group">
+                    <label class="modal-form-label">
+                        <i class="fas fa-star"></i>
+                        Votre témoignage *
+                    </label>
+                    <InputTextArea @bind-Value="TemoignageModel.Contenu"
+                                   class="modal-form-textarea"
+                                   rows="8"
+                                   style="min-height: 180px;"
+                                   placeholder="Racontez votre parcours, vos expériences, vos conseils... Soyez authentique et inspirant !" />
+                    <ValidationMessage For="@(() => TemoignageModel.Contenu)" />
+                    <div class="modal-form-help">
+                        <i class="fas fa-info-circle"></i>
+                        Minimum 100 caractères recommandés pour un témoignage impactant
+                    </div>
+                </div>
+
+                <div class="modal-form-group">
+                    <label class="modal-form-label">
+                        <i class="fas fa-tags"></i>
+                        Mots-clés (optionnel)
+                    </label>
+                    <InputText @bind-Value="TemoignageModel.MotsCles"
+                               class="modal-form-input"
+                               placeholder="Ex: #Carrière #Entrepreneuriat #Promo2019 #Inspiration" />
+                    <div class="modal-form-help">
+                        <i class="fas fa-hashtag"></i>
+                        Séparez les mots-clés par des espaces (ex: #Carrière #Tech #Alumni)
+                    </div>
+                </div>
+
+                <div class="modal-form-actions">
+                    <button type="submit" class="modal-btn-primary" style="background: linear-gradient(135deg, #9f7aea, #805ad5);" disabled="@IsSubmitting">
+                        @if (IsSubmitting)
+                        {
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <span>Publication...</span>
+                        }
+                        else
+                        {
+                            <i class="fas fa-star"></i>
+                            <span>Publier le témoignage</span>
+                        }
+                    </button>
+                    <button type="button" class="modal-btn-secondary" onclick="@($"closeModal('{ModalId}')")">
+                        <i class="fas fa-times"></i>
+                        Annuler
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string ModalId { get; set; } = "createTemoignageModal";
+    [Parameter] public string Title { get; set; } = "Rédiger un témoignage";
+    [Parameter] public TemoignageModel TemoignageModel { get; set; } = new();
+    [Parameter] public EventCallback<TemoignageModel> OnSubmit { get; set; }
+    [Parameter] public bool IsSubmitting { get; set; } = false;
+
+    private async Task HandleSubmit()
+    {
+        if (OnSubmit.HasDelegate)
+        {
+            await OnSubmit.InvokeAsync(TemoignageModel);
+        }
+    }
+}
