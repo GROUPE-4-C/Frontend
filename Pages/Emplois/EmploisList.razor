@@ -1,0 +1,223 @@
+@page "/emplois"
+@layout MainLayout
+@using AlumniConnect.Front.Components.Forms
+@using AlumniConnect.Front.Models
+
+<link href="css/dashboard.css" rel="stylesheet" />
+<link href="css/modal-forms.css" rel="stylesheet" />
+
+<link href="css/dashboard.css" rel="stylesheet" />
+<link href="css/modal-forms.css" rel="stylesheet" />
+<script src="js/modals.js"></script>
+
+
+<!-- Composant Emploi Form -->
+<EmploiForm ModalId="createEmploiModal"
+           EmploiModel="@emploiModel"
+           OnSubmit="@HandleEmploiSubmit"
+           IsSubmitting="@isSubmitting" />
+
+<!-- Header -->
+<header class="header">
+    <div class="header-content">
+        <a href="/dashboard" class="logo">
+            <i class="fas fa-graduation-cap"></i>
+            AlumniConnect
+        </a>
+
+        <div class="search-bar">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="Rechercher des emplois, entreprises...">
+        </div>
+
+        <nav class="nav-menu">
+            <a href="/dashboard" class="nav-item" style="text-decoration: none; color: inherit;">
+                <i class="fas fa-home"></i>
+                <span class="nav-text">Accueil</span>
+            </a>
+            <div class="nav-item active">
+                <i class="fas fa-briefcase"></i>
+                <span class="nav-text">Emplois</span>
+            </div>
+            <a href="/temoignages" class="nav-item" style="text-decoration: none; color: inherit;">
+                <i class="fas fa-star"></i>
+                <span class="nav-text">Témoignages</span>
+            </a>
+            <a href="/events" class="nav-item" style="text-decoration: none; color: inherit;">
+                <i class="fas fa-calendar-alt"></i>
+                <span class="nav-text">Événements</span>
+            </a>
+            <a href="/Auth/Login" class="login-btn">
+                <i class="fas fa-sign-in-alt"></i>
+                Se connecter
+            </a>
+        </nav>
+    </div>
+</header>
+
+<!-- Main Container -->
+<div class="main-container">
+    <!-- Sidebar Left -->
+    <aside class="welcome-card">
+        <h3>💼 Opportunités Emploi</h3>
+        <p>Découvrez les dernières offres d'emploi partagées par notre communauté d'alumni.</p>
+       <button class="login-cta" onclick="openModal('createEmploiModal')">
+    <i class="fas fa-plus"></i>
+    Publier une offre
+</button>
+
+    </aside>
+
+    <!-- Main Feed -->
+    <main class="main-feed">
+        <!-- Filter Bar -->
+        <div class="post-composer">
+            <div class="composer-input">
+                <div class="composer-avatar">💼</div>
+                <input type="text" placeholder="Filtrer par titre, entreprise, localisation...">
+            </div>
+            <div class="composer-actions">
+                <div class="composer-action">
+                    <i class="fas fa-map-marker-alt"></i>
+                    Par lieu
+                </div>
+                <div class="composer-action">
+                    <i class="fas fa-clock"></i>
+                    Plus récentes
+                </div>
+                <div class="composer-action">
+                    <i class="fas fa-building"></i>
+                    Par entreprise
+                </div>
+                <div class="composer-action">
+                    <i class="fas fa-tags"></i>
+                    Catégories
+                </div>
+            </div>
+        </div>
+
+        <!-- Dynamic Job Posts -->
+        @foreach (var emploi in emplois)
+        {
+            <article class="post">
+                <div class="post-header">
+                    <div class="post-avatar" style="background: linear-gradient(135deg, #48bb78, #38a169);">
+                        @emploi.Entreprise[0]
+                    </div>
+                    <div class="post-author-info">
+                        <div class="post-author-name">@emploi.Entreprise</div>
+                        <div class="post-author-title">Publié le @emploi.DateDebut.ToString("dd/MM/yyyy")</div>
+                        <div class="post-time">
+                            <span>@emploi.Localisation</span>
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="post-content">
+                    <div class="testimonial-badge" style="background: linear-gradient(135deg, #48bb78, #38a169);">
+                        <i class="fas fa-briefcase"></i>
+                        Offre d'Emploi
+                    </div>
+
+                    <h3 style="color: #2d3748; margin-bottom: 12px;">@emploi.Titre</h3>
+
+                    <p><strong>📍 Localisation :</strong> @emploi.Localisation</p>
+                    <p><strong>🏢 Entreprise :</strong> @emploi.Entreprise</p>
+                    <p><strong>📅 Date de début :</strong> @emploi.DateDebut.ToString("dd/MM/yyyy")</p>
+
+                    <div style="margin: 16px 0; padding: 16px; background: #f8fafc; border-radius: 8px; border-left: 4px solid #48bb78;">
+                        @emploi.Description
+                    </div>
+
+                    <strong>#Emploi #Développement #CDI</strong>
+                </div>
+
+                <div class="post-stats">
+                    <span>👁️ @Random.Shared.Next(20, 100) vues • @Random.Shared.Next(5, 25) candidatures</span>
+                    <span>@Random.Shared.Next(1, 10) partages</span>
+                </div>
+
+                <div class="post-actions">
+                    <div class="post-action">
+                        <i class="fas fa-paper-plane"></i>
+                        Postuler
+                    </div>
+                    <div class="post-action">
+                        <i class="fas fa-bookmark"></i>
+                        Sauvegarder
+                    </div>
+                    <div class="post-action">
+                        <i class="fas fa-share"></i>
+                        Partager
+                    </div>
+                </div>
+            </article>
+        }
+    </main>
+</div>
+
+@code {
+    private EmploiModel emploiModel = new();
+    private bool isSubmitting = false;
+    private List<EmploiModel> emplois = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        // Simuler un appel API
+        await Task.Delay(500);
+
+        emplois = new List<EmploiModel>
+        {
+            new() {
+                Titre = "Développeur Full Stack Senior",
+                Entreprise = "TechCorp Solutions",
+                Localisation = "Paris, France",
+                Description = "Nous recherchons un développeur Full Stack Senior pour rejoindre notre équipe dynamique. Vous travaillerez sur des projets innovants utilisant React, Node.js et les technologies cloud.",
+                DateDebut = DateTime.Now.AddDays(30)
+            },
+            new() {
+                Titre = "Chef de Projet Digital",
+                Entreprise = "Innovation Corp",
+                Localisation = "Bordeaux, France",
+                Description = "Rejoignez notre équipe en tant que Chef de Projet Digital. Vous piloterez des projets de transformation numérique pour nos clients.",
+                DateDebut = DateTime.Now.AddDays(45)
+            },
+            new() {
+                Titre = "Data Scientist",
+                Entreprise = "DataScience Plus",
+                Localisation = "Lyon, France",
+                Description = "Rejoignez notre équipe de data scientists pour développer des modèles d'IA révolutionnaires. Compétences requises : Python, Machine Learning, TensorFlow, SQL",
+                DateDebut = DateTime.Now.AddDays(20)
+            }
+        };
+    }
+
+    private async Task HandleEmploiSubmit(EmploiModel model)
+    {
+        isSubmitting = true;
+        StateHasChanged();
+
+        try
+        {
+            // Ici vous appellerez votre API
+            await Task.Delay(2000); // Simulation
+
+            emplois.Insert(0, model);
+            emploiModel = new(); // Reset du formulaire
+
+            // Simuler la fermeture du modal via JavaScript
+            await Task.Delay(100);
+        }
+        finally
+        {
+            isSubmitting = false;
+            StateHasChanged();
+        }
+    }
+}
