@@ -1,0 +1,341 @@
+@page "/temoignages"
+@layout MainLayout
+@using AlumniConnect.Front.Components.Forms
+@using AlumniConnect.Front.Models
+
+<link href="css/dashboard.css" rel="stylesheet" />
+<link href="css/modal-forms.css" rel="stylesheet" />
+<link href="css/dashboard.css" rel="stylesheet" />
+<link href="css/modal-forms.css" rel="stylesheet" />
+<script src="js/modals.js"></script>
+
+
+<!-- Composant Temoignage Form -->
+<TemoignageForm ModalId="createTemoignageModal"
+                TemoignageModel="@temoignageModel"
+                OnSubmit="@HandleTemoignageSubmit"
+                IsSubmitting="@isSubmitting" />
+
+<!-- Header -->
+<header class="header">
+    <div class="header-content">
+        <a href="/dashboard" class="logo">
+            <i class="fas fa-graduation-cap"></i>
+            AlumniConnect
+        </a>
+
+        <div class="search-bar">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="Rechercher des témoignages...">
+        </div>
+
+        <nav class="nav-menu">
+            <a href="/dashboard" class="nav-item" style="text-decoration: none; color: inherit;">
+                <i class="fas fa-home"></i>
+                <span class="nav-text">Accueil</span>
+            </a>
+            <div class="nav-item">
+                <i class="fas fa-users"></i>
+                <span class="nav-text">Réseau</span>
+            </div>
+            <a href="/emplois" class="nav-item" style="text-decoration: none; color: inherit;">
+                <i class="fas fa-briefcase"></i>
+                <span class="nav-text">Emplois</span>
+            </a>
+            <div class="nav-item active">
+                <i class="fas fa-star"></i>
+                <span class="nav-text">Témoignages</span>
+            </div>
+            <a href="/events" class="nav-item" style="text-decoration: none; color: inherit;">
+                <i class="fas fa-calendar-alt"></i>
+                <span class="nav-text">Événements</span>
+            </a>
+            <a href="/Auth/Login" class="login-btn">
+                <i class="fas fa-sign-in-alt"></i>
+                Se connecter
+            </a>
+        </nav>
+    </div>
+</header>
+
+<!-- Main Container -->
+<div class="main-container">
+    <!-- Sidebar Left -->
+    <aside class="welcome-card">
+        <h3>⭐ Témoignages Alumni</h3>
+        <p>Partagez votre expérience et découvrez les parcours inspirants de notre communauté d'alumni.</p>
+       <button class="login-cta" onclick="openModal('createTemoignageModal')">
+    <i class="fas fa-plus"></i>
+    Rédiger un témoignage
+</button>
+
+    </aside>
+
+    <!-- Main Feed -->
+    <main class="main-feed">
+        <!-- Filter Bar -->
+        <div class="post-composer">
+            <div class="composer-input">
+                <div class="composer-avatar">⭐</div>
+                <input type="text" placeholder="Filtrer par nom, promotion, mot-clé...">
+            </div>
+            <div class="composer-actions">
+                <div class="composer-action">
+                    <i class="fas fa-graduation-cap"></i>
+                    Par promotion
+                </div>
+                <div class="composer-action">
+                    <i class="fas fa-clock"></i>
+                    Plus récents
+                </div>
+                <div class="composer-action">
+                    <i class="fas fa-heart"></i>
+                    Plus appréciés
+                </div>
+                <div class="composer-action">
+                    <i class="fas fa-tags"></i>
+                    Catégories
+                </div>
+            </div>
+        </div>
+
+        <!-- Testimonial Posts dynamiques -->
+        @foreach (var temoignage in temoignages)
+        {
+            <article class="post testimonial-post">
+                <div class="post-header">
+                    <div class="post-avatar" style="background: linear-gradient(135deg, #9f7aea, #805ad5);">
+                        @(temoignage.UserName.Length > 0 ? temoignage.UserName.Substring(0, Math.Min(2, temoignage.UserName.Length)) : "AL")
+                    </div>
+                    <div class="post-author-info">
+                        <div class="post-author-name">@temoignage.UserName</div>
+                        <div class="post-author-title">@temoignage.UserTitle</div>
+                        <div class="post-time">
+                            <span>@temoignage.Date.ToString("dd/MM/yyyy")</span>
+                            <i class="fas fa-globe-americas"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="post-content">
+                    <div class="testimonial-badge">
+                        <i class="fas fa-star"></i>
+                        Témoignage
+                    </div>
+
+                    <div style="margin: 16px 0; padding: 20px; background: linear-gradient(135deg, rgba(159, 122, 234, 0.1), rgba(102, 126, 234, 0.1)); border-radius: 12px; border-left: 4px solid #9f7aea;">
+                        @temoignage.Contenu
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(temoignage.MotsCles))
+                    {
+                        <strong>@temoignage.MotsCles</strong>
+                    }
+                </div>
+
+                <div class="post-stats">
+                    <span>⭐ @Random.Shared.Next(10, 50) réactions • @Random.Shared.Next(5, 20) commentaires</span>
+                    <span>@Random.Shared.Next(2, 15) partages</span>
+                </div>
+
+                <div class="post-actions">
+                    <div class="post-action">
+                        <i class="fas fa-heart"></i>
+                        Inspirer
+                    </div>
+                    <div class="post-action">
+                        <i class="far fa-comment"></i>
+                        Commenter
+                    </div>
+                    <div class="post-action">
+                        <i class="fas fa-share"></i>
+                        Partager
+                    </div>
+                    <div class="post-action">
+                        <i class="fas fa-bookmark"></i>
+                        Sauvegarder
+                    </div>
+                </div>
+            </article>
+        }
+
+        <!-- Témoignage statique 1 -->
+        <article class="post testimonial-post">
+            <div class="post-header">
+                <div class="post-avatar" style="background: linear-gradient(135deg, #48bb78, #38a169);">MD</div>
+                <div class="post-author-info">
+                    <div class="post-author-name">Marc Dubois</div>
+                    <div class="post-author-title">Entrepreneur • Promo 2016</div>
+                    <div class="post-time">
+                        <span>1j</span>
+                        <i class="fas fa-globe-americas"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="post-content">
+                <div class="testimonial-badge">
+                    <i class="fas fa-star"></i>
+                    Témoignage
+                </div>
+
+                <h3 style="color: #2d3748; margin-bottom: 16px;">De salarié à entrepreneur : mon aventure 💼</h3>
+
+                <div style="margin: 16px 0; padding: 20px; background: linear-gradient(135deg, rgba(72, 187, 120, 0.1), rgba(56, 161, 105, 0.1)); border-radius: 12px; border-left: 4px solid #48bb78;">
+                    Il y a 3 ans, j'ai quitté mon CDI pour créer ma propre entreprise dans la tech.
+                    Aujourd'hui, nous sommes une équipe de 15 personnes et nous levons notre série A !
+                    <br><br>
+                    <strong>Les défis rencontrés :</strong>
+                    <br>• Gérer l'incertitude financière les premiers mois
+                    <br>• Recruter les bonnes personnes
+                    <br>• Trouver les bons investisseurs
+                    <br><br>
+                    <strong>Le réseau alumni a été crucial</strong> pour mes premiers clients et mes premiers employés !
+                </div>
+
+                <strong>#Témoignage #Entrepreneuriat #Startup #Promo2016 #Success</strong>
+            </div>
+
+            <div class="post-stats">
+                <span>⭐ 28 réactions • 15 commentaires</span>
+                <span>11 partages</span>
+            </div>
+
+            <div class="post-actions">
+                <div class="post-action">
+                    <i class="fas fa-heart"></i>
+                    Inspirer
+                </div>
+                <div class="post-action">
+                    <i class="far fa-comment"></i>
+                    Commenter
+                </div>
+                <div class="post-action">
+                    <i class="fas fa-share"></i>
+                    Partager
+                </div>
+                <div class="post-action">
+                    <i class="fas fa-bookmark"></i>
+                    Sauvegarder
+                </div>
+            </div>
+        </article>
+
+        <!-- Témoignage statique 2 -->
+        <article class="post testimonial-post">
+            <div class="post-header">
+                <div class="post-avatar" style="background: linear-gradient(135deg, #ed8936, #dd6b20);">JL</div>
+                <div class="post-author-info">
+                    <div class="post-author-name">Julie Lecomte</div>
+                    <div class="post-author-title">Consultante • Promo 2020</div>
+                    <div class="post-time">
+                        <span>3j</span>
+                        <i class="fas fa-globe-americas"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="post-content">
+                <div class="testimonial-badge">
+                    <i class="fas fa-star"></i>
+                    Témoignage
+                </div>
+
+                <h3 style="color: #2d3748; margin-bottom: 16px;">Mon premier poste grâce au réseau alumni 🚀</h3>
+
+                <div style="margin: 16px 0; padding: 20px; background: linear-gradient(135deg, rgba(237, 137, 54, 0.1), rgba(221, 107, 32, 0.1)); border-radius: 12px; border-left: 4px solid #ed8936;">
+                    Fraîchement diplômée, j'étais un peu perdue pour mon premier emploi.
+                    Un alumni de la promo 2015 m'a contactée après avoir vu mon profil et m'a proposé un poste dans son équipe.
+                    <br><br>
+                    <strong>Ce que j'ai appris :</strong>
+                    <br>• L'importance du networking dès les études
+                    <br>• Comment bien valoriser ses projets étudiants
+                    <br>• L'entraide entre alumni est réelle !
+                    <br><br>
+                    <strong>Mon conseil :</strong> N'hésitez pas à contacter les anciens, ils sont toujours prêts à aider !
+                </div>
+
+                <strong>#Témoignage #PremierEmploi #Networking #Promo2020 #Merci</strong>
+            </div>
+
+            <div class="post-stats">
+                <span>⭐ 42 réactions • 18 commentaires</span>
+                <span>7 partages</span>
+            </div>
+
+            <div class="post-actions">
+                <div class="post-action">
+                    <i class="fas fa-heart"></i>
+                    Inspirer
+                </div>
+                <div class="post-action">
+                    <i class="far fa-comment"></i>
+                    Commenter
+                </div>
+                <div class="post-action">
+                    <i class="fas fa-share"></i>
+                    Partager
+                </div>
+                <div class="post-action">
+                    <i class="fas fa-bookmark"></i>
+                    Sauvegarder
+                </div>
+            </div>
+        </article>
+    </main>
+</div>
+
+@code {
+    private TemoignageModel temoignageModel = new();
+    private bool isSubmitting = false;
+    private List<TemoignageModel> temoignages = new();
+
+    protected override void OnInitialized()
+    {
+        // Données de test
+        temoignages = new List<TemoignageModel>
+        {
+            new() {
+                UserName = "Sarah Lefebvre",
+                UserTitle = "Développeuse Senior • Promo 2019",
+                Contenu = "Diplômée en 2019, j'ai commencé ma carrière comme développeuse junior dans une startup. Aujourd'hui, je suis Lead Developer dans une scale-up qui cartonne ! Ce qui m'a le plus aidé : Les projets pratiques durant la formation, le réseau alumni pour décrocher mon premier poste, la formation continue et la veille technologique. Mon conseil aux nouveaux diplômés : N'ayez pas peur de prendre des risques et investissez dans votre réseau !",
+                MotsCles = "#Témoignage #Développement #Carrière #Promo2019 #Inspiration",
+                Date = DateTime.Now.AddHours(-2)
+            },
+            new() {
+                UserName = "Thomas Martin",
+                UserTitle = "Product Manager • Promo 2018",
+                Contenu = "Après 5 ans dans le développement, j'ai fait une transition vers le Product Management. Ce changement m'a permis d'avoir une vision plus globale des produits tech. Les soft skills développés pendant ma formation m'ont énormément aidé dans cette transition. Le réseau alumni m'a également ouvert des portes pour ce nouveau poste.",
+                MotsCles = "#Témoignage #ProductManagement #TransitionCarrière #Promo2018",
+                Date = DateTime.Now.AddDays(-1)
+            }
+        };
+    }
+
+    private async Task HandleTemoignageSubmit(TemoignageModel model)
+    {
+        isSubmitting = true;
+        StateHasChanged();
+
+        try
+        {
+            // Ici vous appellerez votre API
+            await Task.Delay(2000); // Simulation
+
+            // Ajouter des données simulées pour l'affichage
+            model.UserName = "Utilisateur Actuel";
+            model.UserTitle = "Alumni • Promo 2023";
+
+            temoignages.Insert(0, model);
+            temoignageModel = new(); // Reset du formulaire
+
+            // Simuler la fermeture du modal via JavaScript
+            await Task.Delay(100);
+        }
+        finally
+        {
+            isSubmitting = false;
+            StateHasChanged();
+        }
+    }
+}

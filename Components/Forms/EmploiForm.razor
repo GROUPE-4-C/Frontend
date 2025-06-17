@@ -1,0 +1,165 @@
+@using Microsoft.AspNetCore.Components.Forms
+@using AlumniConnect.Front.Models
+
+<div class="create-modal-overlay" id="@ModalId">
+    <div class="create-modal">
+        <div class="create-modal-header">
+            <h3 class="create-modal-title">
+                <i class="fas fa-briefcase"></i>
+                @Title
+            </h3>
+            <button class="modal-close-btn" onclick="@($"closeModal('{ModalId}')")">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="create-modal-content">
+            <EditForm Model="@EmploiModel" OnValidSubmit="@HandleSubmit">
+                <DataAnnotationsValidator />
+
+                <div class="modal-form-group">
+                    <label class="modal-form-label">
+                        <i class="fas fa-briefcase"></i>
+                        Titre du poste *
+                    </label>
+                    <InputText @bind-Value="EmploiModel.Titre" class="modal-form-input" placeholder="Ex: Développeur Full Stack Senior" />
+                    <ValidationMessage For="@(() => EmploiModel.Titre)" />
+                </div>
+
+                <div class="modal-form-group">
+                    <label class="modal-form-label">
+                        <i class="fas fa-building"></i>
+                        Entreprise *
+                    </label>
+                    <InputText @bind-Value="EmploiModel.Entreprise" class="modal-form-input" placeholder="Ex: TechCorp Solutions" />
+                    <ValidationMessage For="@(() => EmploiModel.Entreprise)" />
+                </div>
+
+                <div class="modal-form-group">
+                    <label class="modal-form-label">
+                        <i class="fas fa-map-marker-alt"></i>
+                        Localisation *
+                    </label>
+                    <InputText @bind-Value="EmploiModel.Localisation" class="modal-form-input" placeholder="Ex: Paris, France" />
+                    <ValidationMessage For="@(() => EmploiModel.Localisation)" />
+                </div>
+
+                <div class="modal-form-grid">
+                    <div class="modal-form-group">
+                        <label class="modal-form-label">
+                            <i class="fas fa-calendar"></i>
+                            Date de début
+                        </label>
+                        <InputDate @bind-Value="EmploiModel.DateDebut" class="modal-form-input" />
+                    </div>
+                    <div class="modal-form-group">
+                        <label class="modal-form-label">
+                            <i class="fas fa-calendar-check"></i>
+                            Date de fin (optionnel)
+                        </label>
+                        <InputDate @bind-Value="EmploiModel.DateFin" class="modal-form-input" />
+                    </div>
+                </div>
+
+                <div class="modal-form-group">
+                    <label class="modal-form-label">
+                        <i class="fas fa-align-left"></i>
+                        Description du poste *
+                    </label>
+                    <InputTextArea @bind-Value="EmploiModel.Description" class="modal-form-textarea" placeholder="Décrivez le poste, les responsabilités, les compétences requises..." />
+                    <ValidationMessage For="@(() => EmploiModel.Description)" />
+                </div>
+
+                <div class="modal-form-group">
+                    <label class="modal-form-label">
+                        <i class="fas fa-image"></i>
+                        Image de l'offre (optionnel)
+                    </label>
+                    <div class="modal-form-file-container">
+                        <div class="modal-form-file-input">
+                            <InputFile OnChange="@HandleImageSelection" accept="image/*" />
+                            <div class="modal-form-file-label">
+                                <div class="modal-form-file-icon">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                </div>
+                                <div class="modal-form-file-text">
+                                    @if (!string.IsNullOrEmpty(selectedImageName))
+                                    {
+                                        <span>📁 @selectedImageName</span>
+                                    }
+                                    else
+                                    {
+                                        <span>Cliquez pour sélectionner une image</span>
+                                    }
+                                </div>
+                                <div class="modal-form-file-hint">PNG, JPG, GIF jusqu'à 5MB</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-form-group">
+                    <label class="modal-form-checkbox">
+                        <InputCheckbox @bind-Value="EmploiModel.EstActif" />
+                        <i class="fas fa-eye"></i>
+                        Offre active et visible
+                    </label>
+                </div>
+
+                <div class="modal-form-actions">
+                    <button type="submit" class="modal-btn-primary" disabled="@IsSubmitting">
+                        @if (IsSubmitting)
+                        {
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <span>Publication...</span>
+                        }
+                        else
+                        {
+                            <i class="fas fa-plus"></i>
+                            <span>Publier l'offre</span>
+                        }
+                    </button>
+                    <button type="button" class="modal-btn-secondary" onclick="@($"closeModal('{ModalId}')")">
+                        <i class="fas fa-times"></i>
+                        Annuler
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string ModalId { get; set; } = "createEmploiModal";
+    [Parameter] public string Title { get; set; } = "Publier une offre d'emploi";
+    [Parameter] public EmploiModel EmploiModel { get; set; } = new();
+    [Parameter] public EventCallback<EmploiModel> OnSubmit { get; set; }
+    [Parameter] public bool IsSubmitting { get; set; } = false;
+
+    private string selectedImageName = string.Empty;
+
+    private async Task HandleSubmit()
+    {
+        if (OnSubmit.HasDelegate)
+        {
+            await OnSubmit.InvokeAsync(EmploiModel);
+        }
+    }
+
+    private void HandleImageSelection(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file != null)
+        {
+            selectedImageName = file.Name;
+
+            // Ici vous pouvez traiter le fichier :
+            // - Validation de la taille
+            // - Upload vers votre serveur
+            // - Génération d'une URL
+
+            // Pour l'instant, on simule juste le nom
+            EmploiModel.ImageUrl = $"/uploads/{file.Name}";
+            StateHasChanged();
+        }
+    }
+}

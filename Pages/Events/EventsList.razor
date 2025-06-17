@@ -1,0 +1,274 @@
+@page "/events"
+@layout MainLayout
+@using AlumniConnect.Front.Components.Forms
+@using AlumniConnect.Front.Models
+
+<link href="css/dashboard.css" rel="stylesheet" />
+<link href="css/modal-forms.css" rel="stylesheet" />
+<link href="css/dashboard.css" rel="stylesheet" />
+<link href="css/modal-forms.css" rel="stylesheet" />
+<script src="js/modals.js"></script>
+
+
+<!-- Composant Event Form -->
+<EventForm ModalId="createEventModal"
+           EventModel="@eventModel"
+           OnSubmit="@HandleEventSubmit"
+           IsSubmitting="@isSubmitting" />
+
+<!-- Header -->
+<header class="header">
+    <div class="header-content">
+        <a href="/dashboard" class="logo">
+            <i class="fas fa-graduation-cap"></i>
+            AlumniConnect
+        </a>
+
+        <div class="search-bar">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="Rechercher des événements...">
+        </div>
+
+        <nav class="nav-menu">
+            <a href="/dashboard" class="nav-item" style="text-decoration: none; color: inherit;">
+                <i class="fas fa-home"></i>
+                <span class="nav-text">Accueil</span>
+            </a>
+            <div class="nav-item">
+                <i class="fas fa-users"></i>
+                <span class="nav-text">Réseau</span>
+            </div>
+            <a href="/emplois" class="nav-item" style="text-decoration: none; color: inherit;">
+                <i class="fas fa-briefcase"></i>
+                <span class="nav-text">Emplois</span>
+            </a>
+            <a href="/temoignages" class="nav-item" style="text-decoration: none; color: inherit;">
+                <i class="fas fa-star"></i>
+                <span class="nav-text">Témoignages</span>
+            </a>
+            <div class="nav-item active">
+                <i class="fas fa-calendar-alt"></i>
+                <span class="nav-text">Événements</span>
+            </div>
+            <a href="/Auth/Login" class="login-btn">
+                <i class="fas fa-sign-in-alt"></i>
+                Se connecter
+            </a>
+        </nav>
+    </div>
+</header>
+
+<!-- Main Container -->
+<div class="main-container">
+    <!-- Sidebar Left -->
+    <aside class="welcome-card">
+        <h3>🗓️ Événements Alumni</h3>
+        <p>Découvrez les événements organisés par notre communauté d'alumni et participez à la vie du réseau.</p>
+        <button class="login-cta" onclick="openModal('createEventModal')">
+    <i class="fas fa-plus"></i>
+    Créer un événement
+</button>
+
+    </aside>
+
+    <!-- Main Feed -->
+    <main class="main-feed">
+        <!-- Filter Bar -->
+        <div class="post-composer">
+            <div class="composer-input">
+                <div class="composer-avatar">🗓️</div>
+                <input type="text" placeholder="Filtrer par titre, lieu, organisateur...">
+            </div>
+            <div class="composer-actions">
+                <div class="composer-action">
+                    <i class="fas fa-calendar-day"></i>
+                    Cette semaine
+                </div>
+                <div class="composer-action">
+                    <i class="fas fa-calendar-month"></i>
+                    Ce mois
+                </div>
+                <div class="composer-action">
+                    <i class="fas fa-map-marker-alt"></i>
+                    Par lieu
+                </div>
+                <div class="composer-action">
+                    <i class="fas fa-tags"></i>
+                    Catégories
+                </div>
+            </div>
+        </div>
+
+        <!-- Event Posts -->
+        @foreach (var eventItem in events)
+        {
+            <article class="post">
+                <div class="post-header">
+                    <div class="post-avatar" style="background: linear-gradient(135deg, #ed8936, #dd6b20);">🎯</div>
+                    <div class="post-author-info">
+                        <div class="post-author-name">@eventItem.Title</div>
+                        <div class="post-author-title">Organisé par @eventItem.Organizer</div>
+                        <div class="post-time">
+                            <span>@eventItem.Date.ToString("dd/MM/yyyy HH:mm")</span>
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="post-content">
+                    <div class="testimonial-badge" style="background: linear-gradient(135deg, #ed8936, #dd6b20);">
+                        <i class="fas fa-calendar-alt"></i>
+                        Événement
+                    </div>
+
+                    <h3 style="color: #2d3748; margin-bottom: 12px;">@eventItem.Title</h3>
+
+                    <p><strong>📅 Date :</strong> @eventItem.Date.ToString("dd MMMM yyyy à HH:mm")</p>
+                    <p><strong>📍 Lieu :</strong> @eventItem.Location</p>
+                    <p><strong>👨‍💼 Organisateur :</strong> @eventItem.Organizer</p>
+
+                    <div style="margin: 16px 0; padding: 16px; background: #f8fafc; border-radius: 8px; border-left: 4px solid #ed8936;">
+                        @eventItem.Description
+                    </div>
+
+                    <strong>#Événement #Alumni #@eventItem.Organizer.Replace(" ", "")</strong>
+                </div>
+
+                <div class="post-stats">
+                    <span>👥 @Random.Shared.Next(10, 80) participants • @Random.Shared.Next(5, 30) intéressés</span>
+                    <span>@Random.Shared.Next(2, 15) partages</span>
+                </div>
+
+                <div class="post-actions">
+                    <div class="post-action">
+                        <i class="fas fa-check"></i>
+                        Participer
+                    </div>
+                    <div class="post-action">
+                        <i class="fas fa-star"></i>
+                        Intéressé
+                    </div>
+                    <div class="post-action">
+                        <i class="fas fa-share"></i>
+                        Partager
+                    </div>
+                    <div class="post-action">
+                        <i class="fas fa-info-circle"></i>
+                        Détails
+                    </div>
+                </div>
+            </article>
+        }
+
+        <!-- Additional static event for demo -->
+        <article class="post">
+            <div class="post-header">
+                <div class="post-avatar" style="background: linear-gradient(135deg, #9f7aea, #805ad5);">🍷</div>
+                <div class="post-author-info">
+                    <div class="post-author-name">Soirée Networking Alumni</div>
+                    <div class="post-author-title">Organisé par Marc Dubois • Promo 2012</div>
+                    <div class="post-time">
+                        <span>Dans 10 jours</span>
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="post-content">
+                <div class="testimonial-badge" style="background: linear-gradient(135deg, #9f7aea, #805ad5);">
+                    <i class="fas fa-calendar-alt"></i>
+                    Événement
+                </div>
+
+                <h3 style="color: #2d3748; margin-bottom: 12px;">Soirée Networking Alumni</h3>
+
+                <p><strong>📅 Date :</strong> 20 Mars 2024 à 19h00</p>
+                <p><strong>📍 Lieu :</strong> Rooftop Le Meridien, Paris</p>
+                <p><strong>👨‍💼 Organisateur :</strong> Marc Dubois</p>
+
+                <div style="margin: 16px 0; padding: 16px; background: #f8fafc; border-radius: 8px; border-left: 4px solid #9f7aea;">
+                    Une soirée conviviale pour échanger, créer des liens et développer votre réseau professionnel !
+                    <br><br>
+                    <strong>Au programme :</strong> Cocktail dînatoire, présentation des nouveaux alumni, échanges libres
+                </div>
+
+                <strong>#Networking #Alumni #Soirée #Paris</strong>
+            </div>
+
+            <div class="post-stats">
+                <span>👥 32 participants • 15 intéressés</span>
+                <span>12 partages</span>
+            </div>
+
+            <div class="post-actions">
+                <div class="post-action">
+                    <i class="fas fa-check"></i>
+                    Participer
+                </div>
+                <div class="post-action">
+                    <i class="fas fa-star"></i>
+                    Intéressé
+                </div>
+                <div class="post-action">
+                    <i class="fas fa-share"></i>
+                    Partager
+                </div>
+                <div class="post-action">
+                    <i class="fas fa-info-circle"></i>
+                    Détails
+                </div>
+            </div>
+        </article>
+    </main>
+</div>
+
+@code {
+    private EventModel eventModel = new();
+    private bool isSubmitting = false;
+    private List<EventModel> events = new();
+
+    protected override void OnInitialized()
+    {
+        // Données de test
+        events = new List<EventModel>
+        {
+            new() {
+                Title = "Conférence Tech Alumni 2024",
+                Organizer = "Sophie Laurent",
+                Location = "Auditorium Central, Campus Université",
+                Description = "Rejoignez-nous pour une journée dédiée aux dernières innovations technologiques ! Conférences, ateliers pratiques et networking avec des experts du secteur.",
+                Date = DateTime.Now.AddDays(5).AddHours(14)
+            },
+            new() {
+                Title = "Workshop Intelligence Artificielle",
+                Organizer = "Dr. Marie Rousseau",
+                Location = "Lab Innovation, Paris",
+                Description = "Atelier pratique sur les dernières avancées en IA et machine learning. Destiné aux professionnels souhaitant approfondir leurs connaissances.",
+                Date = DateTime.Now.AddDays(15).AddHours(10)
+            }
+        };
+    }
+
+    private async Task HandleEventSubmit(EventModel model)
+    {
+        isSubmitting = true;
+        StateHasChanged();
+
+        try
+        {
+            // Ici vous appellerez votre API
+            await Task.Delay(2000); // Simulation
+
+            events.Insert(0, model);
+            eventModel = new(); // Reset du formulaire
+
+            // Simuler la fermeture du modal via JavaScript
+            await Task.Delay(100);
+        }
+        finally
+        {
+            isSubmitting = false;
+            StateHasChanged();
+        }
+    }
+}
