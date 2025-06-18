@@ -1,0 +1,36 @@
+@inherits LayoutComponentBase
+@inject AuthenticationStateProvider AuthStateProvider
+
+@inject AlumniConnect.Front.Services.AuthService AuthService 
+@inject NavigationManager Nav
+
+
+    <main>
+        <div class="top-row px-4 d-flex justify-content-between align-items-center">
+            <a class="navbar-brand" href=""></a> <CascadingAuthenticationState>
+                <AuthorizeView>
+                    <Authorized Context="authContext">
+                        <div class="ml-auto d-flex align-items-center">
+                            <span class="mr-3">@authContext.User.Identity?.Name!</span>
+                            <a href="#" @onclick="HandleLogout">Déconnexion</a>
+                        </div>
+                    </Authorized>
+                    <NotAuthorized>
+                        <a href="/admin/login">Connexion Admin</a>
+                    </NotAuthorized>
+                </AuthorizeView>
+            </CascadingAuthenticationState>
+        </div>
+
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+
+@code {
+    private async Task HandleLogout()
+    {
+        await AuthService.LogoutAsync();
+        Nav.NavigateTo("/admin/login");
+    }
+}

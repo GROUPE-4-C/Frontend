@@ -1,0 +1,161 @@
+@page "/admin/promotions"
+
+@using AlumniConnect.Front.Models
+
+@using AlumniConnect.Front.Pages.Promotions
+@using AlumniConnect.Front.Services
+@using AlumniConnect.Front.Components
+@using Microsoft.AspNetCore.Components.Authorization
+
+@layout AlumniConnect.Front.shared.AdminLayout
+
+
+
+@inject PromotionService PromotionService
+@inject AuthService AuthService
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthStateProvider
+
+<h3 class="mt-4 mb-4">🎓 Gestion des promotions</h3>
+
+@if (!IsAuthorized)
+{
+    <p>Accès refusé. Redirection en cours...</p>
+}
+else
+{
+    <button class="btn btn-success mb-3" @onclick="ShowAddForm">➕ Ajouter une promotion</button>
+
+    @if (IsFormVisible)
+    {
+        <PromotionForm CurrentPromotion="@SelectedPromotion"
+                       OnValidSubmit="SavePromotion"
+                       OnCancel="HideForm" />
+    }
+
+    @if (Promotions.Count == 0)
+    {
+        <p>Aucune promotion trouvée.</p>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var promo in Promotions)
+            {
+                <div class="col-md-4 mb-4">
+                    <PromotionCard Promotion="@promo"
+                                   OnEdit="EditPromotion"
+                                   OnDelete="(() => DeletePromotion(promo.Id))" />
+                </div>
+            }
+        </div>
+    }
+}
+
+@code {
+    private List<Promotion> Promotions = new();
+    private Promotion SelectedPromotion = new();
+    private bool IsFormVisible = false;
+    private bool IsAuthorized = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            if (user.Identity?.IsAuthenticated == true && user.IsInRole("Admin"))
+            {
+                IsAuthorized = true;
+                Console.WriteLine("AdminPromotions: Utilisateur Admin authentifié. Chargement des promotions...");
+                LoadPromotions(); // Active le chargement simulé ici
+            }
+            else
+            {
+                IsAuthorized = false;
+                Console.WriteLine("AdminPromotions: Accès non autorisé. Redirection...");
+                Nav.NavigateTo("/admin/login");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erreur lors de l'initialisation : {ex.Message}");
+            Nav.NavigateTo("/admin/login");
+        }
+    }
+
+    private void LoadPromotions()
+    {
+        Console.WriteLine("Chargement simulé des promotions...");
+        try
+        {
+            // IMPORTANT : Remplacez ceci par l'appel réel à votre PromotionService.GetPromotionsAsync()
+            // Promotions = await PromotionService.GetPromotionsAsync(); 
+            Promotions = new List<Promotion> 
+            {
+                // Données de test pour l'affichage initial
+                new Promotion { Id = 1, Nom = "Promotion 2020" },
+                new Promotion { Id = 2, Nom = "Promotion 2021" },
+                new Promotion { Id = 3, Nom = "Promotion 2022" }
+            };
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erreur de chargement : {ex.Message}");
+            Promotions = new List<Promotion>();
+        }
+    }
+
+    private void ShowAddForm()
+    {
+        SelectedPromotion = new Promotion();
+        IsFormVisible = true;
+    }
+
+    private void EditPromotion(Promotion promo)
+    {
+        SelectedPromotion = new Promotion
+        {
+            Id = promo.Id,
+            Nom = promo.Nom
+            // Ajouter d'autres propriétés si besoin
+        };
+        IsFormVisible = true;
+    }
+
+    private void SavePromotion(Promotion promo)
+    {
+        Console.WriteLine($"Sauvegarde simulée : {promo.Nom}, Id: {promo.Id}");
+        
+        // IMPORTANT : Appelez PromotionService.AddPromotionAsync(promo) ou UpdatePromotionAsync(promo) ici
+        if (promo.Id == 0) // Nouvelle promotion
+        {
+            // await PromotionService.AddPromotionAsync(promo);
+            Console.WriteLine($"Ajout de {promo.Nom}");
+        }
+        else // Mise à jour d'une promotion existante
+        {
+            // await PromotionService.UpdatePromotionAsync(promo);
+            Console.WriteLine($"Mise à jour de {promo.Nom} (ID: {promo.Id})");
+        }
+
+        HideForm();
+        LoadPromotions(); // Simule le rechargement
+    }
+
+    private void DeletePromotion(int id)
+    {
+        Console.WriteLine($"Suppression simulée de l'ID : {id}");
+        // IMPORTANT : Appelez PromotionService.DeletePromotionAsync(id) ici
+        // await PromotionService.DeletePromotionAsync(id);
+        HideForm();
+        LoadPromotions();
+    }
+
+    private void HideForm()
+    {
+        IsFormVisible = false;
+        SelectedPromotion = new Promotion();
+    }
+}

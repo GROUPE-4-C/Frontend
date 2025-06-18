@@ -1,0 +1,40 @@
+@using AlumniConnect.Front.Models 
+@using Microsoft.AspNetCore.Components.Forms 
+@using Microsoft.AspNetCore.Components.Web;
+@using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+
+
+
+<EditForm Model="@CurrentPromotion" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label class="form-label">Nom de la promotion</label>
+        <InputText class="form-control" @bind-Value="CurrentPromotion.Nom" />
+    </div>
+
+    <button type="submit" class="btn btn-success me-2">✅ Enregistrer</button>
+    <button type="button" class="btn btn-secondary" @onclick="Cancel">❌ Annuler</button>
+</EditForm>
+
+@code {
+    [Parameter]
+    public Promotion CurrentPromotion { get; set; } = new Promotion();
+
+    [Parameter]
+    public EventCallback<Promotion> OnValidSubmit { get; set; }
+
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
+
+    private async Task HandleValidSubmit()
+    {
+        await OnValidSubmit.InvokeAsync(CurrentPromotion);
+    }
+
+    private async Task Cancel()
+    {
+        await OnCancel.InvokeAsync();
+    }
+}

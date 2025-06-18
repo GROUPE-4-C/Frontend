@@ -1,0 +1,105 @@
+/* Dans wwwroot/css/app.css ou un nouveau admin-layout.css */
+.page {
+    display: flex;
+    min-height: 100vh;
+}
+
+.sidebar {
+    width: 250px; /* Largeur de la barre latérale */
+    background-color: #343a40; /* Couleur sombre */
+    color: white;
+    padding: 1rem 0;
+    display: flex;
+    flex-direction: column; /* Pour positionner le bouton de déconnexion en bas */
+}
+
+.sidebar .top-row {
+    background-color: rgba(0, 0, 0, 0.2);
+    color: white;
+    text-align: center;
+    padding: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar .navbar-brand {
+    color: white;
+    font-weight: bold;
+}
+
+.sidebar .nav-link {
+    color: #adb5bd; /* Couleur des liens inactifs */
+    padding: 0.75rem 1rem;
+    display: flex; /* Pour aligner icône et texte */
+    align-items: center;
+    text-decoration: none;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.sidebar .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.sidebar .nav-link.active {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    font-weight: bold;
+}
+
+.sidebar .nav-link span { /* Espacement pour les icônes */
+    margin-right: 0.5rem;
+}
+
+.main {
+    flex-grow: 1; /* Le contenu principal prend l'espace restant */
+    padding: 0;
+}
+
+.top-row {
+    background-color: #f8f9fa; /* Couleur claire pour la top-row principale */
+    border-bottom: 1px solid #e9ecef;
+    padding: 0.75rem 1.5rem;
+    text-align: right; /* Pour l'alignement du lien "About" */
+}
+
+.content {
+    padding: 1.5rem;
+}
+
+/* Styles pour le menu responsive (masqué par défaut, affiché par le toggle) */
+.navbar-toggler {
+    background-color: rgba(255, 255, 255, 0.1);
+    position: absolute;
+    top: 0.5rem;
+    right: 1rem;
+    z-index: 10;
+    display: none; /* Masqué par défaut sur les grands écrans */
+}
+
+/* Le .nav-scrollable est le conteneur du menu sur les petits écrans */
+.nav-scrollable {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+/* Media query pour les petits écrans */
+@media (max-width: 767.98px) {
+    .sidebar {
+        width: 100%;
+        height: auto; /* La hauteur s'adapte au contenu */
+        position: fixed; /* Reste en haut */
+        z-index: 1000;
+        top: 0;
+        left: 0;
+        display: none; /* Masqué par défaut sur mobile, s'affiche avec le toggle */
+    }
+    .navbar-toggler {
+        display: block; /* Affiche le bouton toggle sur mobile */
+    }
+    /* Quand le menu est ouvert, il pousse le contenu principal */
+    .sidebar.open + main {
+        margin-top: 100px; /* ou la hauteur de votre sidebar ouverte */
+    }
+}
