@@ -3,12 +3,11 @@
 @using AlumniConnect.Front.Components.Forms
 @using AlumniConnect.Front.Models
 
-<link href="css/dashboard.css" rel="stylesheet" />
-<link href="css/modal-forms.css" rel="stylesheet" />
+<link href="css/shared-navbar.css" rel="stylesheet" />
+<link href="css/body-layout.css" rel="stylesheet" />
 <link href="css/dashboard.css" rel="stylesheet" />
 <link href="css/modal-forms.css" rel="stylesheet" />
 <script src="js/modals.js"></script>
-
 
 <!-- Composant Event Form -->
 <EventForm ModalId="createEventModal"
@@ -16,47 +15,8 @@
            OnSubmit="@HandleEventSubmit"
            IsSubmitting="@isSubmitting" />
 
-<!-- Header -->
-<header class="header">
-    <div class="header-content">
-        <a href="/dashboard" class="logo">
-            <i class="fas fa-graduation-cap"></i>
-            AlumniConnect
-        </a>
-
-        <div class="search-bar">
-            <i class="fas fa-search"></i>
-            <input type="text" placeholder="Rechercher des événements...">
-        </div>
-
-        <nav class="nav-menu">
-            <a href="/dashboard" class="nav-item" style="text-decoration: none; color: inherit;">
-                <i class="fas fa-home"></i>
-                <span class="nav-text">Accueil</span>
-            </a>
-            <div class="nav-item">
-                <i class="fas fa-users"></i>
-                <span class="nav-text">Réseau</span>
-            </div>
-            <a href="/emplois" class="nav-item" style="text-decoration: none; color: inherit;">
-                <i class="fas fa-briefcase"></i>
-                <span class="nav-text">Emplois</span>
-            </a>
-            <a href="/temoignages" class="nav-item" style="text-decoration: none; color: inherit;">
-                <i class="fas fa-star"></i>
-                <span class="nav-text">Témoignages</span>
-            </a>
-            <div class="nav-item active">
-                <i class="fas fa-calendar-alt"></i>
-                <span class="nav-text">Événements</span>
-            </div>
-            <a href="/Auth/Login" class="login-btn">
-                <i class="fas fa-sign-in-alt"></i>
-                Se connecter
-            </a>
-        </nav>
-    </div>
-</header>
+<!-- Navbar partagée -->
+<SharedNavbar ActivePage="events" RequireLogin="false" />
 
 <!-- Main Container -->
 <div class="main-container">
