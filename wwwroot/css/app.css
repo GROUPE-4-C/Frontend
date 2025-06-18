@@ -27,7 +27,7 @@ body {
 }
 
 .content {
-    padding-top: 1.1rem;
+    /* padding-top: 1.1rem; */
     overflow-x: hidden;
     width: 100%;
     max-width: 100%;

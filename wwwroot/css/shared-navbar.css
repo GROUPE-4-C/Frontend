@@ -1,0 +1,347 @@
+/* CSS pour la navbar partagée - prend toute la largeur de l'écran */
+
+/* Reset global pour éviter les conflits */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f8fafc;
+    min-height: 100vh;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+}
+
+/* Header uniforme qui prend toute la largeur */
+.header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100vw; /* Force la largeur complète */
+    z-index: 1000;
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.15);
+    margin: 0;
+    padding: 0;
+}
+
+.header-content {
+    width: 100%;
+    max-width: none; /* Supprime la limitation de largeur */
+    margin: 0;
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    height: 60px;
+    gap: 20px;
+    justify-content: space-between;
+}
+
+/* Logo */
+.logo {
+    font-size: 20px;
+    font-weight: bold;
+    color: white;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 140px;
+    flex-shrink: 0;
+}
+
+.logo i {
+    font-size: 24px;
+}
+
+.logo:hover {
+    color: white;
+    text-decoration: none;
+}
+
+/* Barre de recherche */
+.search-bar {
+    flex: 1;
+    max-width: 550px;
+    position: relative;
+    margin: 0 20px;
+}
+
+.search-bar input {
+    width: 100%;
+    padding: 10px 16px 10px 40px;
+    border: none;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.95);
+    color: #333;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+.search-bar input:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.5);
+    background: white;
+}
+
+.search-bar input::placeholder {
+    color: #666;
+}
+
+.search-bar i {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+    font-size: 14px;
+}
+
+/* Menu de navigation */
+.nav-menu {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 11px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    position: relative;
+    cursor: pointer;
+    min-width: 60px;
+    text-align: center;
+}
+
+.nav-item:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.1);
+    text-decoration: none;
+}
+
+.nav-item.active {
+    color: white;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.nav-item.active::after {
+    content: "";
+    position: absolute;
+    bottom: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    height: 2px;
+    background: white;
+    border-radius: 1px;
+}
+
+.nav-item i {
+    font-size: 18px;
+    margin-bottom: 2px;
+}
+
+.nav-item .nav-text {
+    line-height: 1.2;
+    font-weight: 500;
+}
+
+/* Login button */
+.login-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.login-btn:hover {
+    background: white;
+    color: #667eea;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
+    text-decoration: none;
+}
+
+/* Login modal overlay */
+.login-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    transition: all 0.3s ease;
+}
+
+.login-modal {
+    background: white;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    transform: translateY(50px);
+    transition: transform 0.3s ease;
+}
+
+.login-modal h3 {
+    color: #2d3748;
+    margin-bottom: 16px;
+    font-size: 24px;
+}
+
+.login-modal p {
+    color: #718096;
+    margin-bottom: 32px;
+    line-height: 1.6;
+}
+
+.login-modal .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 32px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    margin: 0 8px;
+    border: none;
+    cursor: pointer;
+}
+
+.login-modal .btn-primary {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+}
+
+.login-modal .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+.login-modal .btn-secondary {
+    background: transparent;
+    color: #667eea;
+    border: 2px solid #667eea;
+}
+
+.login-modal .btn-secondary:hover {
+    background: #667eea;
+    color: white;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .header-content {
+        padding: 0 16px;
+        gap: 16px;
+    }
+
+    .search-bar {
+        max-width: 400px;
+        margin: 0 16px;
+    }
+}
+
+@media (max-width: 900px) {
+    .nav-item .nav-text {
+        display: none;
+    }
+
+    .nav-item {
+        min-width: 48px;
+        padding: 8px 8px;
+    }
+
+    .search-bar {
+        max-width: 300px;
+        margin: 0 10px;
+    }
+}
+
+@media (max-width: 768px) {
+    .header-content {
+        padding: 0 12px;
+        gap: 8px;
+    }
+
+    .nav-menu {
+        gap: 4px;
+    }
+
+    .nav-item {
+        min-width: 44px;
+        padding: 6px 6px;
+    }
+
+    .nav-item i {
+        font-size: 16px;
+    }
+
+    .search-bar {
+        max-width: 200px;
+        margin: 0 8px;
+    }
+
+    .logo {
+        min-width: 120px;
+        font-size: 18px;
+    }
+}
+
+@media (max-width: 480px) {
+    .header-content {
+        padding: 0 8px;
+        gap: 4px;
+    }
+
+    .search-bar {
+        display: none; /* Cache la recherche sur très petits écrans */
+    }
+
+    .nav-item {
+        min-width: 40px;
+        padding: 4px 4px;
+    }
+
+    .login-btn {
+        padding: 6px 12px;
+        font-size: 11px;
+    }
+
+    .logo {
+        min-width: 100px;
+        font-size: 16px;
+    }
+}

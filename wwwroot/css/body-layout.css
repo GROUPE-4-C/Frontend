@@ -1,0 +1,40 @@
+/* CSS global pour le layout du body avec navbar fixe */
+
+/* Style pour les pages avec navbar interne */
+body.dashboard-page {
+    padding-top: 60px;
+}
+
+/* Style pour la page landing */
+body.landing-page {
+    padding-top: 70px;
+}
+
+/* Classes utilitaires */
+.main-content {
+    width: 100%;
+    min-height: calc(100vh - 60px);
+}
+
+.main-content.landing {
+    min-height: calc(100vh - 70px);
+}
+
+/* Container pour contenu avec espacement */
+.content-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+.content-container.full-width {
+    max-width: none;
+    width: 100%;
+}
+
+/* Responsive pour containers */
+@media (max-width: 768px) {
+    .content-container {
+        padding: 16px;
+    }
+}

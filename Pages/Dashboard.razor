@@ -1,76 +1,12 @@
-﻿@page "/dashboard"
+@page "/dashboard"
 @layout MainLayout
 
+<link href="css/shared-navbar.css" rel="stylesheet" />
+<link href="css/body-layout.css" rel="stylesheet" />
 <link href="css/dashboard.css" rel="stylesheet" />
 
-<!-- Login Modal Overlay -->
-<div class="login-overlay" id="loginOverlay">
-    <div class="login-modal">
-        <h3>🔐 Connexion requise</h3>
-        <p>Pour interagir avec la communauté AlumniConnect, vous devez vous connecter à votre compte.</p>
-        <div>
-            <a href="/Login" class="btn btn-primary">
-                <i class="fas fa-sign-in-alt"></i>
-                Se connecter
-            </a>
-            <button class="btn btn-secondary" onclick="closeLoginModal()">
-                <i class="fas fa-times"></i>
-                Annuler
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- Header -->
-<header class="header">
-    <div class="header-content">
-        <a href="#" class="logo">
-            <i class="fas fa-graduation-cap"></i>
-            AlumniConnect
-        </a>
-
-        <div class="search-bar">
-            <i class="fas fa-search"></i>
-            <input type="text" placeholder="Rechercher des alumni, entreprises, postes..." onclick="requireLogin()">
-        </div>
-
-             <nav class="nav-menu">
-            <div class="nav-item active">
-                <i class="fas fa-home"></i>
-                <span class="nav-text">Accueil</span>
-            </div>
-            <div class="nav-item" onclick="requireLogin()">
-                <i class="fas fa-users"></i>
-                <span class="nav-text">Réseau</span>
-            </div>
-            <a href="/emplois" class="nav-item" style="text-decoration: none; color: inherit;">
-                <i class="fas fa-briefcase"></i>
-                <span class="nav-text">Emplois</span>
-            </a>
-            <a href="/temoignages" class="nav-item" style="text-decoration: none; color: inherit;">
-                <i class="fas fa-star"></i>
-                <span class="nav-text">Témoignages</span>
-            </a>
-            <a href="/events" class="nav-item" style="text-decoration: none; color: inherit;">
-                <i class="fas fa-calendar-alt"></i>
-                <span class="nav-text">Événements</span>
-            </a>
-            <div class="nav-item" onclick="requireLogin()">
-                <i class="fas fa-comment-dots"></i>
-                <span class="nav-text">Messages</span>
-            </div>
-            <div class="nav-item" onclick="requireLogin()">
-                <i class="fas fa-bell"></i>
-                <span class="nav-text">Notifications</span>
-            </div>
-            <a href="/login" class="login-btn">
-                <i class="fas fa-sign-in-alt"></i>
-                Se connecter
-            </a>
-        </nav>
-
-    </div>
-</header>
+<!-- Navbar partagée -->
+<SharedNavbar ActivePage="dashboard" RequireLogin="true" />
 
 <!-- Main Container -->
 <div class="main-container">
@@ -78,7 +14,7 @@
     <aside class="welcome-card">
         <h3>👋 Bienvenue sur AlumniConnect</h3>
         <p>Découvrez notre communauté d'alumni, parcourez les témoignages et les opportunités professionnelles.</p>
-        <a href="/Account/Login" class="login-cta">
+        <a href="/Login" class="login-cta">
             <i class="fas fa-user-plus"></i>
             Rejoindre la communauté
         </a>
@@ -170,3 +106,21 @@
         </article>
     </main>
 </div>
+
+<script>
+    function requireLogin() {
+        document.getElementById('loginOverlay').style.display = 'flex';
+    }
+
+    function closeLoginModal() {
+        document.getElementById('loginOverlay').style.display = 'none';
+    }
+
+    // Close modal when clicking outside
+    document.addEventListener('click', function(event) {
+        const overlay = document.getElementById('loginOverlay');
+        if (event.target === overlay) {
+            closeLoginModal();
+        }
+    });
+</script>
