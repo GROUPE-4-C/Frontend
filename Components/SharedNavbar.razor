@@ -1,0 +1,103 @@
+@* Composant navbar partagé pour uniformiser l'interface *@
+
+<!-- Login Modal Overlay -->
+<div class="login-overlay" id="loginOverlay">
+    <div class="login-modal">
+        <h3>🔐 Connexion requise</h3>
+        <p>Pour interagir avec la communauté AlumniConnect, vous devez vous connecter à votre compte.</p>
+        <div>
+            <a href="/Login" class="btn btn-primary">
+                <i class="fas fa-sign-in-alt"></i>
+                Se connecter
+            </a>
+            <button class="btn btn-secondary" onclick="closeLoginModal()">
+                <i class="fas fa-times"></i>
+                Annuler
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Header uniforme -->
+<header class="header">
+    <div class="header-content">
+        <a href="/dashboard" class="logo">
+            <i class="fas fa-graduation-cap"></i>
+            AlumniConnect
+        </a>
+
+        <div class="search-bar">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="@GetSearchPlaceholder()" onclick="@(RequireLogin ? "requireLogin()" : "")">
+        </div>
+
+        <nav class="nav-menu">
+            <a href="/dashboard" class="nav-item @(ActivePage == "dashboard" ? "active" : "")" style="text-decoration: none; color: inherit;">
+                <i class="fas fa-home"></i>
+                <span class="nav-text">Accueil</span>
+            </a>
+            <div class="nav-item @(ActivePage == "reseau" ? "active" : "")" onclick="requireLogin()">
+                <i class="fas fa-users"></i>
+                <span class="nav-text">Réseau</span>
+            </div>
+            <a href="/emplois" class="nav-item @(ActivePage == "emplois" ? "active" : "")" style="text-decoration: none; color: inherit;">
+                <i class="fas fa-briefcase"></i>
+                <span class="nav-text">Emplois</span>
+            </a>
+            <a href="/temoignages" class="nav-item @(ActivePage == "temoignages" ? "active" : "")" style="text-decoration: none; color: inherit;">
+                <i class="fas fa-star"></i>
+                <span class="nav-text">Témoignages</span>
+            </a>
+            <a href="/events" class="nav-item @(ActivePage == "events" ? "active" : "")" style="text-decoration: none; color: inherit;">
+                <i class="fas fa-calendar-alt"></i>
+                <span class="nav-text">Événements</span>
+            </a>
+            <div class="nav-item @(ActivePage == "messages" ? "active" : "")" onclick="requireLogin()">
+                <i class="fas fa-comment-dots"></i>
+                <span class="nav-text">Messages</span>
+            </div>
+            <div class="nav-item @(ActivePage == "notifications" ? "active" : "")" onclick="requireLogin()">
+                <i class="fas fa-bell"></i>
+                <span class="nav-text">Notifications</span>
+            </div>
+            <a href="/login" class="login-btn">
+                <i class="fas fa-sign-in-alt"></i>
+                Se connecter
+            </a>
+        </nav>
+    </div>
+</header>
+
+<script>
+    function requireLogin() {
+        document.getElementById('loginOverlay').style.display = 'flex';
+    }
+
+    function closeLoginModal() {
+        document.getElementById('loginOverlay').style.display = 'none';
+    }
+
+    // Close modal when clicking outside
+    document.addEventListener('click', function(event) {
+        const overlay = document.getElementById('loginOverlay');
+        if (event.target === overlay) {
+            closeLoginModal();
+        }
+    });
+</script>
+
+@code {
+    [Parameter] public string ActivePage { get; set; } = "";
+    [Parameter] public bool RequireLogin { get; set; } = true;
+
+    private string GetSearchPlaceholder()
+    {
+        return ActivePage switch
+        {
+            "emplois" => "Rechercher des emplois, entreprises...",
+            "events" => "Rechercher des événements...",
+            "temoignages" => "Rechercher des témoignages...",
+            _ => "Rechercher des alumni, entreprises, postes..."
+        };
+    }
+}
