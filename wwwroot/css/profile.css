@@ -1,0 +1,282 @@
+/* Styles pour la page profil AlumniConnect */
+
+.main-container {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+/* Carte de profil (sidebar gauche) */
+.profile-card {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    height: fit-content;
+    position: sticky;
+    top: 2rem;
+    text-align: center;
+}
+
+.profile-card h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 0.5rem;
+}
+
+.profile-title {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #805ad5;
+    margin-bottom: 0.25rem;
+}
+
+.profile-promo {
+    font-size: 0.9rem;
+    color: #718096;
+    margin-bottom: 1rem;
+    font-style: italic;
+}
+
+.profile-bio {
+    font-size: 0.95rem;
+    color: #4a5568;
+    line-height: 1.5;
+    margin: 1.5rem 0;
+    padding: 1rem;
+    background: #f7fafc;
+    border-radius: 8px;
+    border-left: 4px solid #805ad5;
+}
+
+.profile-contact {
+    text-align: left;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e2e8f0;
+    font-size: 0.9rem;
+    color: #4a5568;
+    line-height: 1.8;
+}
+
+.profile-contact i {
+    color: #805ad5;
+    width: 16px;
+    margin-right: 0.5rem;
+}
+
+/* Section principale (contenu à droite) */
+.profile-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.profile-feed section {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.profile-feed h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.profile-feed h3 i {
+    color: #805ad5;
+    font-size: 1.1rem;
+}
+
+/* Cartes de contenu */
+.card {
+    background: #f8f9fa;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(128, 90, 213, 0.15);
+    border-color: #805ad5;
+}
+
+.card:last-child {
+    margin-bottom: 0;
+}
+
+/* Cartes emploi */
+.emploi-card strong {
+    font-size: 1.1rem;
+    color: #2d3748;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.emploi-card span {
+    color: #805ad5;
+    font-weight: 500;
+}
+
+.emploi-date {
+    font-size: 0.85rem;
+    color: #718096;
+    font-weight: 400 !important;
+    margin: 0.5rem 0;
+    display: block;
+}
+
+.emploi-card > div:nth-of-type(2) {
+    color: #4a5568;
+    line-height: 1.5;
+    margin: 0.75rem 0;
+}
+
+.emploi-local {
+    font-size: 0.9rem;
+    color: #718096;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+}
+
+.emploi-local::before {
+    content: "📍";
+    margin-right: 0.5rem;
+}
+
+/* Cartes événement */
+.event-card strong {
+    font-size: 1.1rem;
+    color: #2d3748;
+}
+
+.event-date {
+    font-size: 0.85rem;
+    color: #805ad5;
+    font-weight: 500;
+    margin-left: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    background: rgba(128, 90, 213, 0.1);
+    border-radius: 12px;
+}
+
+.event-card > div:first-of-type {
+    color: #4a5568;
+    line-height: 1.5;
+    margin: 0.75rem 0;
+}
+
+.event-location {
+    font-size: 0.9rem;
+    color: #718096;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+}
+
+.event-location::before {
+    content: "📍";
+    margin-right: 0.5rem;
+}
+
+/* Cartes témoignage */
+.temoignage-card {
+    border-left: 4px solid #805ad5;
+}
+
+.temoignage-card > div:first-child {
+    color: #2d3748;
+    line-height: 1.6;
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    font-style: italic;
+}
+
+.temoignage-date {
+    font-size: 0.85rem;
+    color: #718096;
+    margin-bottom: 0.5rem;
+}
+
+.temoignage-motscles {
+    font-size: 0.85rem;
+    color: #805ad5;
+    font-weight: 500;
+}
+
+.temoignage-motscles::before {
+    content: "🏷️ ";
+    margin-right: 0.25rem;
+}
+
+/* Messages de chargement et vides */
+.profile-feed div:not(.card) {
+    text-align: center;
+    color: #718096;
+    font-style: italic;
+    padding: 2rem;
+    background: #f7fafc;
+    border-radius: 8px;
+    border: 2px dashed #e2e8f0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .main-container {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        margin: 1rem auto;
+    }
+
+    .profile-card {
+        position: static;
+        padding: 1.5rem;
+    }
+
+    .profile-feed section {
+        padding: 1rem;
+    }
+
+    .card {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .main-container {
+        padding: 0 0.5rem;
+    }
+
+    .profile-card {
+        padding: 1rem;
+    }
+
+    .profile-card h2 {
+        font-size: 1.25rem;
+    }
+
+    .profile-feed h3 {
+        font-size: 1.1rem;
+    }
+}

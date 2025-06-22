@@ -1,70 +1,186 @@
 @* Composant navbar partagé pour uniformiser l'interface *@
 
-<!-- Login Modal Overlay -->
 <div class="login-overlay" id="loginOverlay">
     <div class="login-modal">
-        <h3>🔐 Connexion requise</h3>
-        <p>Pour interagir avec la communauté AlumniConnect, vous devez vous connecter à votre compte.</p>
-        <div>
+        <div class="modal-icon">
+            <i class="fas fa-lock"></i>
+        </div>
+        <h3>Connexion requise</h3>
+        <p>Rejoignez la communauté AlumniConnect pour accéder à toutes les fonctionnalités exclusives.</p>
+        <div class="modal-actions">
             <a href="/Login" class="btn btn-primary">
                 <i class="fas fa-sign-in-alt"></i>
                 Se connecter
             </a>
             <button class="btn btn-secondary" onclick="closeLoginModal()">
-                <i class="fas fa-times"></i>
                 Annuler
             </button>
         </div>
     </div>
 </div>
 
-<!-- Header uniforme -->
-<header class="header">
-    <div class="header-content">
-        <a href="/dashboard" class="logo">
-            <i class="fas fa-graduation-cap"></i>
-            AlumniConnect
-        </a>
-
-        <div class="search-bar">
-            <i class="fas fa-search"></i>
-            <input type="text" placeholder="@GetSearchPlaceholder()" onclick="@(RequireLogin ? "requireLogin()" : "")">
+<!-- Header moderne -->
+<header class="modern-header">
+    <div class="header-container">
+        <!-- Logo Section -->
+        <div class="logo-section">
+            <a href="/dashboard" class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-graduation-cap"></i>
+                </div>
+                <span class="logo-text">AlumniConnect</span>
+            </a>
         </div>
 
-        <nav class="nav-menu">
-            <a href="/dashboard" class="nav-item @(ActivePage == "dashboard" ? "active" : "")" style="text-decoration: none; color: inherit;">
-                <i class="fas fa-home"></i>
-                <span class="nav-text">Accueil</span>
-            </a>
-            <div class="nav-item @(ActivePage == "reseau" ? "active" : "")" onclick="requireLogin()">
-                <i class="fas fa-users"></i>
-                <span class="nav-text">Réseau</span>
+        <!-- Search Section -->
+        <div class="search-section">
+            <div class="search-container">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text"
+                       class="search-input"
+                       placeholder="@GetSearchPlaceholder()"
+                       onclick="@(RequireLogin ? "requireLogin()" : "")">
+                <div class="search-suggestions" id="searchSuggestions">
+                    <!-- Suggestions dynamiques -->
+                </div>
             </div>
-            <a href="/emplois" class="nav-item @(ActivePage == "emplois" ? "active" : "")" style="text-decoration: none; color: inherit;">
-                <i class="fas fa-briefcase"></i>
-                <span class="nav-text">Emplois</span>
-            </a>
-            <a href="/temoignages" class="nav-item @(ActivePage == "temoignages" ? "active" : "")" style="text-decoration: none; color: inherit;">
-                <i class="fas fa-star"></i>
-                <span class="nav-text">Témoignages</span>
-            </a>
-            <a href="/events" class="nav-item @(ActivePage == "events" ? "active" : "")" style="text-decoration: none; color: inherit;">
-                <i class="fas fa-calendar-alt"></i>
-                <span class="nav-text">Événements</span>
-            </a>
-            <div class="nav-item @(ActivePage == "messages" ? "active" : "")" onclick="requireLogin()">
-                <i class="fas fa-comment-dots"></i>
-                <span class="nav-text">Messages</span>
+        </div>
+
+        <!-- Navigation Menu -->
+        <nav class="nav-section">
+            <div class="nav-items">
+                <a href="/dashboard" class="nav-link @(ActivePage == "dashboard" ? "active" : "")">
+                    <div class="nav-icon">
+                        <i class="fas fa-home"></i>
+                    </div>
+                    <span class="nav-label">Accueil</span>
+                </a>
+
+                <div class="nav-link @(ActivePage == "reseau" ? "active" : "")" onclick="requireLogin()">
+                    <div class="nav-icon">
+                        <i class="fas fa-users"></i>
+                        <span class="nav-badge">12</span>
+                    </div>
+                    <span class="nav-label">Réseau</span>
+                </div>
+
+                <a href="/emplois" class="nav-link @(ActivePage == "emplois" ? "active" : "")">
+                    <div class="nav-icon">
+                        <i class="fas fa-briefcase"></i>
+                    </div>
+                    <span class="nav-label">Emplois</span>
+                </a>
+
+                <a href="/temoignages" class="nav-link @(ActivePage == "temoignages" ? "active" : "")">
+                    <div class="nav-icon">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <span class="nav-label">Témoignages</span>
+                </a>
+
+                <a href="/events" class="nav-link @(ActivePage == "events" ? "active" : "")">
+                    <div class="nav-icon">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <span class="nav-label">Événements</span>
+                </a>
+
+                <div class="nav-link @(ActivePage == "messages" ? "active" : "")" onclick="requireLogin()">
+                    <div class="nav-icon">
+                        <i class="fas fa-comment-dots"></i>
+                        <span class="nav-badge notification">3</span>
+                    </div>
+                    <span class="nav-label">Messages</span>
+                </div>
+
+                <div class="nav-link @(ActivePage == "notifications" ? "active" : "")" onclick="requireLogin()">
+                    <div class="nav-icon">
+                        <i class="fas fa-bell"></i>
+                        <span class="nav-badge notification">5</span>
+                    </div>
+                    <span class="nav-label">Notifications</span>
+                </div>
             </div>
-            <div class="nav-item @(ActivePage == "notifications" ? "active" : "")" onclick="requireLogin()">
-                <i class="fas fa-bell"></i>
-                <span class="nav-text">Notifications</span>
-            </div>
-            <a href="/login" class="login-btn">
-                <i class="fas fa-sign-in-alt"></i>
-                Se connecter
-            </a>
         </nav>
+
+        <!-- User Section -->
+        <div class="user-section">
+            <div class="user-menu">
+                <a href="/profile" class="profile-link @(ActivePage == "profile" ? "active" : "")">
+                    <div class="profile-avatar">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <span class="profile-name">Profil</span>
+                </a>
+
+                <a href="/login" class="login-button">
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span>Connexion</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Mobile Menu Toggle -->
+        <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">
+            <span class="hamburger"></span>
+            <span class="hamburger"></span>
+            <span class="hamburger"></span>
+        </button>
+    </div>
+
+    <!-- Mobile Navigation -->
+    <div class="mobile-nav" id="mobileNav">
+        <div class="mobile-nav-content">
+            <div class="mobile-search">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="@GetSearchPlaceholder()">
+            </div>
+
+            <div class="mobile-nav-items">
+                <a href="/dashboard" class="mobile-nav-item @(ActivePage == "dashboard" ? "active" : "")">
+                    <i class="fas fa-home"></i>
+                    <span>Accueil</span>
+                </a>
+                <div class="mobile-nav-item" onclick="requireLogin()">
+                    <i class="fas fa-users"></i>
+                    <span>Réseau</span>
+                    <span class="mobile-badge">12</span>
+                </div>
+                <a href="/emplois" class="mobile-nav-item @(ActivePage == "emplois" ? "active" : "")">
+                    <i class="fas fa-briefcase"></i>
+                    <span>Emplois</span>
+                </a>
+                <a href="/temoignages" class="mobile-nav-item @(ActivePage == "temoignages" ? "active" : "")">
+                    <i class="fas fa-star"></i>
+                    <span>Témoignages</span>
+                </a>
+                <a href="/events" class="mobile-nav-item @(ActivePage == "events" ? "active" : "")">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>Événements</span>
+                </a>
+                <div class="mobile-nav-item" onclick="requireLogin()">
+                    <i class="fas fa-comment-dots"></i>
+                    <span>Messages</span>
+                    <span class="mobile-badge notification">3</span>
+                </div>
+                <div class="mobile-nav-item" onclick="requireLogin()">
+                    <i class="fas fa-bell"></i>
+                    <span>Notifications</span>
+                    <span class="mobile-badge notification">5</span>
+                </div>
+                <a href="/profile" class="mobile-nav-item @(ActivePage == "profile" ? "active" : "")">
+                    <i class="fas fa-user-circle"></i>
+                    <span>Profil</span>
+                </a>
+            </div>
+
+            <div class="mobile-login">
+                <a href="/login" class="mobile-login-btn">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Se connecter
+                </a>
+            </div>
+        </div>
     </div>
 </header>
 

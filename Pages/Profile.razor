@@ -1,0 +1,137 @@
+@page "/profile"
+@using AlumniConnect.Front.Models
+@inject AlumniConnect.Front.Services.AuthService AuthService
+@inject HttpClient Http
+@inject IJSRuntime JS
+
+<SharedNavbar ActivePage="profile" RequireLogin="true" />
+<link href="css/profile.css" rel="stylesheet" />
+<link href="css/shared-navbar.css" rel="stylesheet" />
+
+<link href="css/dashboard.css" rel="stylesheet" />
+
+<div class="main-container">
+    <aside class="profile-card">
+        @if (User != null)
+        {
+           <img class="profile-avatar" src="@GetFullPhotoUrl(User.PhotoUrl)" alt="Avatar" style="width:120px;height:120px;border-radius:50%;object-fit:cover;border:3px solid #805ad5;margin-bottom:1rem;" />
+
+            <h2>@User.FullName</h2>
+            <div class="profile-title">@User.Profession</div>
+            <div class="profile-promo">@User.Promotion</div>
+            <div class="profile-bio">@User.Bio</div>
+            <div class="profile-contact">
+                <i class="fas fa-envelope"></i> @User.Email <br />
+                <i class="fas fa-phone"></i> @User.PhoneNumber
+            </div>
+        }
+        else
+        {
+            <div>Chargement du profil...</div>
+        }
+    </aside>
+
+    <main class="profile-feed">
+        <section>
+            <h3><i class="fas fa-briefcase"></i> Mes emplois</h3>
+            @if (Emplois == null)
+            {
+                <div>Chargement...</div>
+            }
+            else if (Emplois.Count == 0)
+            {
+                <div>Aucun emploi publié.</div>
+            }
+            else
+            {
+                @foreach (var emploi in Emplois)
+                {
+                    <div class="card emploi-card">
+                        <strong>@emploi.Titre</strong> chez <span>@emploi.Entreprise</span> <br />
+                        <span class="emploi-date">@emploi.DateDebut.ToShortDateString() - @emploi.DateFin.ToShortDateString()</span>
+                        <div>@emploi.Description</div>
+                        <div class="emploi-local">@emploi.Localisation</div>
+                    </div>
+                }
+            }
+        </section>
+
+        <section>
+            <h3><i class="fas fa-calendar-alt"></i> Mes événements</h3>
+            @if (Events == null)
+            {
+                <div>Chargement...</div>
+            }
+            else if (Events.Count == 0)
+            {
+                <div>Aucun événement publié.</div>
+            }
+            else
+            {
+                @foreach (var ev in Events)
+                {
+                    <div class="card event-card">
+                        <strong>@ev.Title</strong> <span class="event-date">@ev.Date.ToShortDateString()</span>
+                        <div>@ev.Description</div>
+                        <div class="event-location">@ev.Location</div>
+                    </div>
+                }
+            }
+        </section>
+
+        <section>
+            <h3><i class="fas fa-star"></i> Mes témoignages</h3>
+            @if (Temoignages == null)
+            {
+                <div>Chargement...</div>
+            }
+            else if (Temoignages.Count == 0)
+            {
+                <div>Aucun témoignage publié.</div>
+            }
+            else
+            {
+                @foreach (var temoignage in Temoignages)
+                {
+                    <div class="card temoignage-card">
+                        <div>@temoignage.Contenu</div>
+                        <div class="temoignage-date">@temoignage.Date.ToShortDateString()</div>
+                        <div class="temoignage-motscles">@temoignage.MotsCles</div>
+                    </div>
+                }
+            }
+        </section>
+    </main>
+</div>
+
+@code {
+    UserInfo? User;
+    List<EmploiModel>? Emplois;
+    List<EventModel>? Events;
+    List<TemoignageModel>? Temoignages;
+      private string GetFullPhotoUrl(string? photoUrl)
+{
+    if (string.IsNullOrWhiteSpace(photoUrl))
+        return "images/default-avatar.png"; // ou une image par défaut de ton choix
+
+    // Si l'URL commence déjà par http, on la retourne telle quelle
+    if (photoUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+        return photoUrl;
+
+    // Sinon, on préfixe avec l'URL du backend
+    return $"http://localhost:5175{photoUrl}";
+}
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        User = await AuthService.GetCurrentUserAsync();
+        if (User != null)
+        {
+            // Appels API pour récupérer les contenus de l'utilisateur
+            Emplois = await Http.GetFromJsonAsync<List<EmploiModel>>($"/api/emplois/user/{User.Id}");
+            Events = await Http.GetFromJsonAsync<List<EventModel>>($"/api/events/user/{User.Id}");
+            Temoignages = await Http.GetFromJsonAsync<List<TemoignageModel>>($"/api/temoignages/user/{User.Id}");
+        }
+    }
+}
