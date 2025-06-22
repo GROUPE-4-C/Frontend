@@ -1,0 +1,210 @@
+@page "/articles"
+@layout MainLayout
+
+@using Microsoft.AspNetCore.Components.Forms
+
+<!-- Navbar partagée -->
+<SharedNavbar ActivePage="articles" RequireLogin="false" />
+
+<link href="css/dashboard.css" rel="stylesheet" />
+
+<style>
+    .article-card {
+        background: #fff;
+        border-radius: 14px;
+        box-shadow: 0 2px 16px rgba(44,62,80,0.08);
+        margin-bottom: 2rem;
+        padding: 2rem 2rem 1.5rem 2rem;
+        transition: box-shadow 0.2s;
+        max-width: 700px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .article-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    .article-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #4299e1, #3182ce);
+        color: #fff;
+        font-weight: bold;
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        box-shadow: 0 2px 8px rgba(44,62,80,0.10);
+    }
+    .article-meta {
+        font-size: 0.95rem;
+        color: #888;
+    }
+    .article-title {
+        margin: 0.5rem 0 0.5rem 0;
+        font-size: 1.35rem;
+        font-weight: 600;
+        color: #222;
+    }
+    .article-badge {
+        display: inline-block;
+        background: #f6e05e;
+        color: #805ad5;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        padding: 0.2em 0.7em;
+        margin-bottom: 0.5em;
+        margin-right: 0.5em;
+    }
+    .article-content {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1em;
+        max-height: 350px;
+        overflow: auto;
+        font-size: 1.05rem;
+        line-height: 1.7;
+        color: #333;
+        margin-top: 1em;
+        white-space: pre-wrap;
+    }
+    .upload-btn {
+        background: linear-gradient(90deg, #805ad5, #4299e1);
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        padding: 0.7em 1.5em;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        margin-top: 0.7em;
+        transition: background 0.2s;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        width: fit-content;
+        text-align: center;
+    }
+    .upload-btn:hover {
+        background: linear-gradient(90deg, #6b46c1, #3182ce);
+    }
+    .file-info {
+        margin-top: 0.5em;
+        color: #805ad5;
+        text-align: center;
+    }
+</style>
+
+<div class="main-container">
+    <aside class="welcome-card">
+        <h3>📰 Uploader un article (fichier .md)</h3>
+        <div class="form-group" style="text-align:center;">
+            <label class="upload-btn">
+                <InputFile id="mdFile" OnChange="OnFileSelected" accept=".md" style="display:none;" />
+                Sélectionner un fichier .md
+            </label>
+            @if (!string.IsNullOrEmpty(mdFileName))
+            {
+                <div class="file-info">Fichier sélectionné : <b>@mdFileName</b></div>
+            }
+        </div>
+    </aside>
+
+    <main class="main-feed">
+        @foreach (var article in articles)
+        {
+            <div class="article-card">
+                <div class="article-header">
+                    <div class="article-avatar">@article.AuthorInitials</div>
+                    <div>
+                        <div class="article-meta">@article.Author • @article.Date.ToString("dd MMM yyyy")</div>
+                        <span class="article-badge"><i class="fas fa-newspaper"></i> Article</span>
+                    </div>
+                </div>
+                <div class="article-title">@article.Title</div>
+                <div class="article-content">@article.Content</div>
+            </div>
+        }
+    </main>
+</div>
+
+@code {
+    private string? mdFileName;
+    private string? mdContent;
+
+    private List<Article> articles = new()
+    {
+        new Article
+        {
+            Title = "L'impact du réseau Alumni sur la carrière professionnelle : étude de cas et témoignages",
+            Author = "Jean Dupont",
+            AuthorInitials = "JD",
+            Date = DateTime.Now.AddDays(-1),
+            Content = @"# Introduction
+
+Le réseau Alumni est devenu un levier incontournable pour le développement professionnel. Dans cet article, nous explorons comment l'appartenance à une communauté d'anciens élèves peut transformer une carrière, à travers des études de cas, des témoignages et des conseils pratiques.
+
+## 1. Qu'est-ce qu'un réseau Alumni ?
+
+Un réseau Alumni regroupe les anciens élèves d'une école ou d'une université. Il permet de :
+- Garder le contact avec ses pairs
+- Partager des opportunités professionnelles
+- Organiser des événements et ateliers
+
+## 2. Témoignage : Fatou K.
+
+> ""Grâce au réseau Alumni, j'ai trouvé mon premier emploi en moins de deux mois après l'obtention de mon diplôme. Les conseils des anciens ont été précieux !""
+
+## 3. Chiffres clés
+
+- 78% des membres affirment avoir bénéficié d'une opportunité grâce au réseau
+- 56% participent régulièrement à des événements
+
+## 4. Conseils pour tirer parti du réseau
+
+- Participez activement aux événements
+- N'hésitez pas à solliciter des recommandations
+- Partagez vos propres expériences
+
+## 5. Conclusion
+
+Le réseau Alumni est bien plus qu'un simple annuaire : c'est une véritable communauté d'entraide et de partage. Rejoignez-nous et boostez votre carrière !
+
+---
+
+*Article rédigé par Jean Dupont, promo 2018*"
+        }
+    };
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        mdFileName = file.Name;
+        using var stream = file.OpenReadStream();
+        using var reader = new StreamReader(stream);
+        mdContent = await reader.ReadToEndAsync();
+
+        // Ajoute l'article uploadé à la liste (titre = nom du fichier, auteur générique)
+        articles.Insert(0, new Article
+        {
+            Title = file.Name,
+            Author = "Auteur inconnu",
+            AuthorInitials = "AI",
+            Date = DateTime.Now,
+            Content = mdContent ?? ""
+        });
+    }
+
+    public class Article
+    {
+        public string Title { get; set; } = string.Empty;
+        public string Author { get; set; } = string.Empty;
+        public string AuthorInitials { get; set; } = string.Empty;
+        public DateTime Date { get; set; }
+        public string Content { get; set; } = string.Empty;
+    }
+}
