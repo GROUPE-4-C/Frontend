@@ -30,7 +30,7 @@ a,
 
 .btn-primary {
     color: #fff;
-    background-color: #1b6ec2;
+    background-color: #e80dec;
     border-color: #1861ac;
 }
 
@@ -41,7 +41,7 @@ a,
 .form-check-input:focus {
     box-shadow:
         0 0 0 0.1rem white,
-        0 0 0 0.25rem #258cfb;
+        0 0 0 0.25rem #fb25e2;
 }
 
 /* Règles pour le débordement horizontal */
@@ -79,7 +79,7 @@ a,
 
 /* Corrections et ajouts pour la top-row (barre supérieure à droite) */
 .top-row {
-    background-color: #a745a0; /* Couleur de fond de l'en-tête */
+    background-color:rgb(237, 23, 248); /* Couleur de fond de l'en-tête */
     border-bottom: 1px solid #d6d6d6; /* Ligne de séparation en bas */
     height: 3.5rem; /* Hauteur fixe de l'en-tête */
     display: flex; /* Activer Flexbox pour l'alignement des éléments */
@@ -119,7 +119,7 @@ a,
 }
 
 .valid.modified:not([type="checkbox"]) {
-    outline: 1px solid #26b050;
+    outline: 1px solid #b02626;
 }
 
 .invalid {
@@ -215,7 +215,7 @@ code {
 
 /* Styles pour la barre latérale */
 .sidebar {
-    background-image: linear-gradient(180deg, rgb(169, 79, 136) 0%, #5d0f70 70%);
+    background-image: linear-gradient(180deg, rgb(237, 23, 248), rgb(237, 23, 248));
 }
 
 .sidebar .nav-item {
