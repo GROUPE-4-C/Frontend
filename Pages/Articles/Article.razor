@@ -99,6 +99,8 @@
     }
 </style>
 
+
+
 <div class="main-container">
     <aside class="welcome-card">
         <h3>📰 Uploader un article (fichier .md)</h3>
@@ -136,9 +138,9 @@
     private string? mdFileName;
     private string? mdContent;
 
-    private List<Article> articles = new()
+    private List<ArticleModel> articles = new()
     {
-        new Article
+        new ArticleModel
         {
             Title = "L'impact du réseau Alumni sur la carrière professionnelle : étude de cas et témoignages",
             Author = "Jean Dupont",
@@ -189,7 +191,7 @@ Le réseau Alumni est bien plus qu'un simple annuaire : c'est une véritable com
         mdContent = await reader.ReadToEndAsync();
 
         // Ajoute l'article uploadé à la liste (titre = nom du fichier, auteur générique)
-        articles.Insert(0, new Article
+        articles.Insert(0, new ArticleModel
         {
             Title = file.Name,
             Author = "Auteur inconnu",
@@ -199,7 +201,7 @@ Le réseau Alumni est bien plus qu'un simple annuaire : c'est une véritable com
         });
     }
 
-    public class Article
+    public class ArticleModel
     {
         public string Title { get; set; } = string.Empty;
         public string Author { get; set; } = string.Empty;
