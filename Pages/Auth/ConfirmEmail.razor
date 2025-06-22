@@ -1,5 +1,9 @@
 @page "/confirm-email"
 @layout MainLayout
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+@using AlumniConnect.Front.Models
+@using AlumniConnect.Front.Services
 
 <link href="css/auth.css" rel="stylesheet" />
 
@@ -30,7 +34,7 @@
             @if (showSuccess)
             {
                 <div class="alert alert-success">
-                    <p>Email confirmé avec succès ! Vous pouvez maintenant vous connecter.</p>
+                    <p>@successMessage</p>
                 </div>
             }
 
@@ -82,19 +86,17 @@
     </div>
 </div>
 
-@inject NavigationManager Navigation
-@using System.ComponentModel.DataAnnotations
-
 @code {
     [Parameter]
     [SupplyParameterFromQuery]
     public string? Email { get; set; }
 
-    private ConfirmEmailModel confirmModel = new();
+    private ConfirmEmailDto confirmModel = new();
     private List<string> errors = new();
     private bool isLoading = false;
     private bool isResending = false;
     private bool showSuccess = false;
+    private string successMessage = string.Empty;
 
     protected override void OnInitialized()
     {
@@ -112,15 +114,39 @@
 
         try
         {
-            await Task.Delay(2000);
-            showSuccess = true;
+            var result = await AuthService.ConfirmEmailAsync(confirmModel);
 
-            await Task.Delay(2000);
-            Navigation.NavigateTo("/login");
+            if (result.Success)
+            {
+                successMessage = result.Message;
+                showSuccess = true;
+
+                // Attendre un peu pour montrer le message de succès
+                await Task.Delay(2000);
+
+                // Redirection vers la page de connexion
+                Navigation.NavigateTo("/login");
+            }
+            else
+            {
+                // Gérer les erreurs
+                if (result.Errors != null && result.Errors.Any())
+                {
+                    errors.AddRange(result.Errors);
+                }
+                else if (!string.IsNullOrEmpty(result.Message))
+                {
+                    errors.Add(result.Message);
+                }
+                else
+                {
+                    errors.Add("Erreur lors de la confirmation");
+                }
+            }
         }
         catch (Exception ex)
         {
-            errors.Add($"Erreur lors de la confirmation: {ex.Message}");
+            errors.Add($"Erreur inattendue: {ex.Message}");
         }
         finally
         {
@@ -130,32 +156,49 @@
 
     private async Task HandleResendOtp()
     {
+        if (string.IsNullOrEmpty(confirmModel.Email))
+        {
+            errors.Add("Veuillez saisir votre email.");
+            return;
+        }
+
         isResending = true;
         errors.Clear();
 
         try
         {
-            await Task.Delay(1000);
-            errors.Add("Code renvoyé avec succès !");
+            var resendDto = new ResendOtpDto { Email = confirmModel.Email };
+            var result = await AuthService.ResendOtpAsync(resendDto);
+
+            if (result.Success)
+            {
+                successMessage = result.Message;
+                showSuccess = true;
+            }
+            else
+            {
+                // Gérer les erreurs
+                if (result.Errors != null && result.Errors.Any())
+                {
+                    errors.AddRange(result.Errors);
+                }
+                else if (!string.IsNullOrEmpty(result.Message))
+                {
+                    errors.Add(result.Message);
+                }
+                else
+                {
+                    errors.Add("Erreur lors du renvoi du code");
+                }
+            }
         }
         catch (Exception ex)
         {
-            errors.Add($"Erreur lors du renvoi: {ex.Message}");
+            errors.Add($"Erreur inattendue: {ex.Message}");
         }
         finally
         {
             isResending = false;
         }
-    }
-
-    public class ConfirmEmailModel
-    {
-        [Required(ErrorMessage = "L'email est requis")]
-        [EmailAddress(ErrorMessage = "Format d'email invalide")]
-        public string Email { get; set; } = string.Empty;
-
-        [Required(ErrorMessage = "Le code de vérification est requis")]
-        [StringLength(6, MinimumLength = 6, ErrorMessage = "Le code doit contenir exactement 6 caractères")]
-        public string Token { get; set; } = string.Empty;
     }
 }
