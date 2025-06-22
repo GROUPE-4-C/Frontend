@@ -1,5 +1,9 @@
 @page "/login"
 @layout MainLayout
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+@using AlumniConnect.Front.Models
+@using AlumniConnect.Front.Services
 
 <link href="css/auth.css" rel="stylesheet" />
 
@@ -20,6 +24,13 @@
                     {
                         <p>@error</p>
                     }
+                </div>
+            }
+
+            @if (showSuccess)
+            {
+                <div class="alert alert-success">
+                    <p>@successMessage</p>
                 </div>
             }
 
@@ -60,47 +71,67 @@
     </div>
 </div>
 
-@inject NavigationManager Navigation
-@using System.ComponentModel.DataAnnotations
-
 @code {
-    private LoginModel loginModel = new();
+    private LoginDto loginModel = new();
     private List<string> errors = new();
     private bool isLoading = false;
+    private bool showSuccess = false;
+    private string successMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Vérifier si l'utilisateur est déjà connecté
+        if (await AuthService.IsAuthenticatedAsync())
+        {
+            Navigation.NavigateTo("/dashboard");
+        }
+    }
 
     private async Task HandleLogin()
     {
         isLoading = true;
         errors.Clear();
+        showSuccess = false;
 
         try
         {
-            // Ici vous pouvez appeler votre service API
-            // var result = await AuthService.LoginAsync(loginModel);
+            var result = await AuthService.LoginAsync(loginModel);
 
-            // Simulation d'un appel API
-            await Task.Delay(2000);
+            if (result.Success && result.Data != null)
+            {
+                successMessage = result.Message;
+                showSuccess = true;
 
-            // Simulation de succès - redirection vers dashboard
-            Navigation.NavigateTo("/dashboard");
+                // Attendre un peu pour montrer le message de succès
+                await Task.Delay(1000);
+
+                // Redirection vers dashboard
+                Navigation.NavigateTo("/dashboard");
+            }
+            else
+            {
+                // Gérer les erreurs
+                if (result.Errors != null && result.Errors.Any())
+                {
+                    errors.AddRange(result.Errors);
+                }
+                else if (!string.IsNullOrEmpty(result.Message))
+                {
+                    errors.Add(result.Message);
+                }
+                else
+                {
+                    errors.Add("Erreur lors de la connexion");
+                }
+            }
         }
         catch (Exception ex)
         {
-            errors.Add($"Erreur lors de la connexion: {ex.Message}");
+            errors.Add($"Erreur inattendue: {ex.Message}");
         }
         finally
         {
             isLoading = false;
         }
-    }
-
-    public class LoginModel
-    {
-        [Required(ErrorMessage = "L'email est requis")]
-        [EmailAddress(ErrorMessage = "Format d'email invalide")]
-        public string Email { get; set; } = string.Empty;
-
-        [Required(ErrorMessage = "Le mot de passe est requis")]
-        public string Password { get; set; } = string.Empty;
     }
 }
