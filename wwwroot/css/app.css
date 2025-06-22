@@ -30,8 +30,8 @@ a,
 
 .btn-primary {
     color: #fff;
-    background-color: #e80dec;
-    border-color: #1861ac;
+    background-color: #5f0be6;
+    border-color: #bb19f6;
 }
 
 .btn:focus,
@@ -41,7 +41,7 @@ a,
 .form-check-input:focus {
     box-shadow:
         0 0 0 0.1rem white,
-        0 0 0 0.25rem #fb25e2;
+        0 0 0 0.25rem #3807ca;
 }
 
 /* Règles pour le débordement horizontal */
