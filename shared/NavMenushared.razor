@@ -1,25 +1,22 @@
-<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">AlumniConnect.Front</a> <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+<div class="navbar-brand-container">
+    <a class="navbar-brand-custom" href="">ESGIS</a>
+    @* On supprime le bouton de bascule ici *@
+</div>
+
+@* La classe "collapse" et le @NavMenuCssClass ne sont plus nécessaires car le menu est toujours ouvert *@
+<nav class="nav flex-column">
+    <div class="nav-item px-3">
+        <NavLink class="nav-link" href="admin/promotions" Match="NavLinkMatch.Prefix">
+            <span class="bi bi-tags-fill-nav-menu" aria-hidden="true"></span> Promotions
+        </NavLink>
     </div>
-</div>
-
-
-<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="admin/promotions" Match="NavLinkMatch.Prefix">
-                <span class="bi bi-tags-fill-nav-menu" aria-hidden="true"></span> Promotions
-            </NavLink>
-        </div>
-    </nav>
-</div>
+</nav>
 
 @code {
-    private bool collapseNavMenu = true;
-
+    // Le code pour ToggleNavMenu et collapseNavMenu n'est plus nécessaire ici.
+    // Il n'est pas supprimé pour l'instant pour éviter des erreurs de compilation si d'autres parties l'utilisent encore,
+    // mais il n'aura plus d'effet sur la visibilité du menu.
+    private bool collapseNavMenu = false; // Initialisé à false pour que le menu soit visible
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
 
     private void ToggleNavMenu()
