@@ -56,13 +56,14 @@
                     <span class="nav-label">Accueil</span>
                 </a>
 
-                <div class="nav-link @(ActivePage == "reseau" ? "active" : "")" onclick="requireLogin()">
-                    <div class="nav-icon">
-                        <i class="fas fa-users"></i>
-                        <span class="nav-badge">12</span>
-                    </div>
-                    <span class="nav-label">Réseau</span>
-                </div>
+            <a href="/alumni" class="nav-link @(ActivePage == "reseau" ? "active" : "")">
+    <div class="nav-icon">
+        <i class="fas fa-users"></i>
+    </div>
+    <span class="nav-label">Réseau</span>
+</a>
+
+
 
                 <a href="/emplois" class="nav-link @(ActivePage == "emplois" ? "active" : "")">
                     <div class="nav-icon">

@@ -1,0 +1,152 @@
+@page "/alumni/{Id}"
+@using AlumniConnect.Front.Models
+@inject HttpClient Http
+<link href="css/shared-navbar.css" rel="stylesheet" />
+<link href="css/alumni-page.css" rel="stylesheet" />
+<SharedNavbar ActivePage="reseau" RequireLogin="false" />
+
+<div class="alumni-container">
+    <div class="content-wrapper">
+        <aside class="sidebar">
+            <a href="/alumni" style="color:#667eea;text-decoration:none;font-weight:600;">
+                <i class="fas fa-arrow-left"></i> Retour à la liste
+            </a>
+        </aside>
+        <section class="main-content">
+            @if (alumni == null)
+            {
+                <div class="loading-state">
+                    <div class="loading-spinner"></div>
+                    Chargement du profil...
+                </div>
+            }
+            else
+            {
+                <div class="alumni-header" style="margin-bottom:2rem;">
+                    <div class="alumni-avatar" style="width:100px;height:100px;">
+                        @if (!string.IsNullOrWhiteSpace(alumni.PhotoUrl))
+                        {
+                            <img src="@GetFullPhotoUrl(alumni.PhotoUrl)" alt="Photo de @alumni.FullName" />
+                        }
+                        else
+                        {
+                            @(alumni.FullName?.FirstOrDefault() ?? '?')
+                        }
+                    </div>
+                    <div class="alumni-info" style="margin-left:24px;">
+                        <h2>@alumni.FullName</h2>
+                        <div class="alumni-profession">@alumni.Profession</div>
+                        <div class="alumni-promotion">Promotion @alumni.PromotionId</div>
+                        <div class="alumni-contact" style="margin-top:10px;">
+                            <i class="fas fa-envelope"></i> @alumni.Email
+                        </div>
+                    </div>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(alumni.Bio))
+                {
+                    <div class="alumni-bio" style="margin-bottom:2rem;">@alumni.Bio</div>
+                }
+
+                <!-- Emplois -->
+                <section style="margin-bottom:2rem;">
+                    <h3><i class="fas fa-briefcase"></i> Emplois</h3>
+                    @if (emplois == null)
+                    {
+                        <div>Chargement...</div>
+                    }
+                    else if (!emplois.Any())
+                    {
+                        <div>Aucun emploi publié.</div>
+                    }
+                    else
+                    {
+                        @foreach (var emploi in emplois)
+                        {
+                            <div class="card emploi-card">
+                                <strong>@emploi.Titre</strong> chez <span>@emploi.Entreprise</span> <br />
+                                <span class="emploi-date">@emploi.DateDebut.ToShortDateString()</span>
+                                <div>@emploi.Description</div>
+                                <div class="emploi-local">@emploi.Localisation</div>
+                            </div>
+                        }
+                    }
+                </section>
+
+                <!-- Events -->
+                <section style="margin-bottom:2rem;">
+                    <h3><i class="fas fa-calendar-alt"></i> Événements</h3>
+                    @if (events == null)
+                    {
+                        <div>Chargement...</div>
+                    }
+                    else if (!events.Any())
+                    {
+                        <div>Aucun événement publié.</div>
+                    }
+                    else
+                    {
+                        @foreach (var ev in events)
+                        {
+                            <div class="card event-card">
+                                <strong>@ev.Title</strong> <span class="event-date">@ev.Date.ToShortDateString()</span>
+                                <div>@ev.Description</div>
+                                <div class="event-location">@ev.Location</div>
+                            </div>
+                        }
+                    }
+                </section>
+
+                <!-- Témoignages -->
+                <section>
+                    <h3><i class="fas fa-star"></i> Témoignages</h3>
+                    @if (temoignages == null)
+                    {
+                        <div>Chargement...</div>
+                    }
+                    else if (!temoignages.Any())
+                    {
+                        <div>Aucun témoignage publié.</div>
+                    }
+                    else
+                    {
+                        @foreach (var temoignage in temoignages)
+                        {
+                            <div class="card temoignage-card">
+                                <div>@temoignage.Contenu</div>
+                                <div class="temoignage-date">@temoignage.Date.ToShortDateString()</div>
+                                <div class="temoignage-motscles">@temoignage.MotsCles</div>
+                            </div>
+                        }
+                    }
+                </section>
+            }
+        </section>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Id { get; set; }
+    private AlumniModel? alumni;
+    private List<EmploiModel>? emplois;
+    private List<EventModel>? events;
+    private List<TemoignageModel>? temoignages;
+
+    protected override async Task OnInitializedAsync()
+    {
+        alumni = await Http.GetFromJsonAsync<AlumniModel>($"/api/alumni/{Id}");
+        emplois = await Http.GetFromJsonAsync<List<EmploiModel>>($"/api/emplois/user/{Id}");
+        temoignages = await Http.GetFromJsonAsync<List<TemoignageModel>>($"/api/temoignages/user/{Id}");
+        events = await Http.GetFromJsonAsync<List<EventModel>>($"/api/events/user/{Id}");
+    }
+
+    private string GetFullPhotoUrl(string? photoUrl)
+    {
+        if (string.IsNullOrWhiteSpace(photoUrl))
+            return "images/default-avatar.png"; // Image par défaut
+
+        if (photoUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+            return photoUrl;
+
+        return $"http://localhost:5175{photoUrl}";
+    }
+}

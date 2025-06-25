@@ -1,0 +1,158 @@
+@using AlumniConnect.Front.Models
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@page "/alumni"
+@layout MainLayout
+@using System.Net.Http.Json
+
+<link href="css/shared-navbar.css" rel="stylesheet" />
+<link href="css/alumni-page.css" rel="stylesheet" />
+
+<SharedNavbar ActivePage="reseau" RequireLogin="false" />
+
+<div class="alumni-container">
+    <div class="content-wrapper">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <h2>
+                <span>👥</span>
+                Réseau Alumni
+            </h2>
+            <p>Découvrez et connectez-vous avec tous les membres de notre communauté AlumniConnect.</p>
+
+            <div class="search-section">
+                <label class="search-label">🔍 Rechercher</label>
+                <input type="text"
+                       class="search-input"
+                       @bind="search"
+                       placeholder="Nom, profession..." />
+            </div>
+
+            @if (alumniList != null)
+            {
+                <div class="stats-card">
+                    <div class="stats-number">@alumniList.Count</div>
+                    <div class="stats-label">Alumni connectés</div>
+                </div>
+            }
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="content-header">
+                <h1 class="content-title">Notre Communauté</h1>
+                <p class="content-subtitle">
+                    @if (alumniList != null && !string.IsNullOrWhiteSpace(search))
+                    {
+                        @($"{alumniListFiltered.Count()} résultat(s) pour \"{search}\"")
+                    }
+                    else
+                    {
+                        @("Explorez les profils de nos anciens étudiants")
+                    }
+                </p>
+            </div>
+
+            @if (alumniList == null)
+            {
+                <div class="loading-state">
+                    <div class="loading-spinner"></div>
+                    <h3>Chargement des profils...</h3>
+                    <p>Veuillez patienter pendant que nous récupérons les informations.</p>
+                </div>
+            }
+            else if (!alumniListFiltered.Any())
+            {
+                <div class="empty-state">
+                    <div class="empty-icon">🔍</div>
+                    <h3>Aucun alumni trouvé</h3>
+                    <p>
+                        @if (!string.IsNullOrWhiteSpace(search))
+                        {
+                            @("Essayez avec d'autres mots-clés ou supprimez les filtres.")
+                        }
+                        else
+                        {
+                            @("Il semble qu'aucun alumni ne soit encore enregistré.")
+                        }
+                    </p>
+                </div>
+            }
+            else
+            {
+                <div class="alumni-grid">
+                    @foreach (var alumni in alumniListFiltered)
+                    {
+                        <div class="alumni-card" style="cursor:pointer"
+                             @onclick="@(() => GoToAlumniProfile(alumni.Id))">
+                            <div class="alumni-header">
+                                <div class="alumni-avatar">
+                                    @if (!string.IsNullOrEmpty(alumni.PhotoUrl))
+                                    {
+                                        <img src="@GetFullPhotoUrl(alumni.PhotoUrl)" alt="Photo de @alumni.FullName" />
+                                    }
+                                    else
+                                    {
+                                        @(alumni.FullName?.FirstOrDefault() ?? '?')
+                                    }
+                                </div>
+                                <div class="alumni-info">
+                                    <h3>@alumni.FullName</h3>
+                                    <div class="alumni-profession">@alumni.Profession</div>
+                                    <span class="alumni-promotion">Promotion @alumni.PromotionId</span>
+                                </div>
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(alumni.Bio))
+                            {
+                                <div class="alumni-bio">@alumni.Bio</div>
+                            }
+
+                            <div class="alumni-contact">
+                                <span>📧</span>
+                                <span>@alumni.Email</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </main>
+    </div>
+</div>
+
+@code {
+    private List<AlumniModel> alumniList;
+    private string search = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        alumniList = await Http.GetFromJsonAsync<List<AlumniModel>>("/api/alumni/all");
+    }
+
+    private IEnumerable<AlumniModel> alumniListFiltered =>
+        string.IsNullOrWhiteSpace(search)
+            ? alumniList ?? new List<AlumniModel>()
+            : alumniList?.Where(a =>
+                (a.FullName ?? "").Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                (a.Profession ?? "").Contains(search, StringComparison.OrdinalIgnoreCase)
+            ) ?? new List<AlumniModel>();
+
+    private string GetFullPhotoUrl(string? photoUrl)
+    {
+        if (string.IsNullOrWhiteSpace(photoUrl))
+            return "images/default-avatar.png"; // Image par défaut
+
+        // Si l'URL commence déjà par http, on la retourne telle quelle
+        if (photoUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+            return photoUrl;
+
+        // Sinon, on préfixe avec l'URL du backend
+        return $"http://localhost:5175{photoUrl}";
+    }
+
+    private void GoToAlumniProfile(string? id)
+    {
+        if (!string.IsNullOrWhiteSpace(id))
+            Navigation.NavigateTo($"/alumni/{id}");
+    }
+}
