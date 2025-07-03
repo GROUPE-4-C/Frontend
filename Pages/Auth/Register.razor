@@ -1,6 +1,7 @@
 @page "/register"
 @layout MainLayout
 @inject AuthService AuthService
+@inject PromotionService PromotionService
 @inject NavigationManager Navigation
 @using AlumniConnect.Front.Models
 @using AlumniConnect.Front.Services
@@ -36,7 +37,8 @@
         </div>
 
         <EditForm Model="registerModel" OnValidSubmit="HandleSubmit">
-            <DataAnnotationsValidator />
+            <!-- Supprimer DataAnnotationsValidator pour éviter la validation automatique -->
+            <!-- <DataAnnotationsValidator /> -->
 
             @if (errors.Any())
             {
@@ -63,19 +65,20 @@
                 <div class="form-group">
                     <label for="fullName">Nom complet *</label>
                     <InputText id="fullName" class="form-control" @bind-Value="registerModel.FullName" placeholder="Votre nom complet" />
-                    <ValidationMessage For="@(() => registerModel.FullName)" />
+                    <!-- Supprimer ValidationMessage pour éviter l'affichage automatique -->
+                    <!-- <ValidationMessage For="@(() => registerModel.FullName)" /> -->
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
                         <label for="email">Email *</label>
                         <InputText id="email" type="email" class="form-control" @bind-Value="registerModel.Email" placeholder="votre@email.com" />
-                        <ValidationMessage For="@(() => registerModel.Email)" />
+                        <!-- <ValidationMessage For="@(() => registerModel.Email)" /> -->
                     </div>
                     <div class="form-group">
                         <label for="phoneNumber">Téléphone</label>
                         <InputText id="phoneNumber" type="tel" class="form-control" @bind-Value="registerModel.PhoneNumber" placeholder="+228 XX XX XX XX" />
-                        <ValidationMessage For="@(() => registerModel.PhoneNumber)" />
+                        <!-- <ValidationMessage For="@(() => registerModel.PhoneNumber)" /> -->
                     </div>
                 </div>
 
@@ -83,26 +86,46 @@
                     <div class="form-group">
                         <label for="profession">Profession *</label>
                         <InputText id="profession" class="form-control" @bind-Value="registerModel.Profession" placeholder="Votre profession" />
-                        <ValidationMessage For="@(() => registerModel.Profession)" />
+                        <!-- <ValidationMessage For="@(() => registerModel.Profession)" /> -->
                     </div>
                     <div class="form-group">
                         <label for="promotionId">Promotion *</label>
-                        <InputSelect id="promotionId" class="form-control" @bind-Value="registerModel.PromotionId">
-                            <option value="0">Sélectionnez votre promotion</option>
-                            <option value="1">Promotion 2020</option>
-                            <option value="2">Promotion 2021</option>
-                            <option value="3">Promotion 2022</option>
-                            <option value="4">Promotion 2023</option>
-                            <option value="5">Promotion 2024</option>
-                        </InputSelect>
-                        <ValidationMessage For="@(() => registerModel.PromotionId)" />
+                        @if (isLoadingPromotions)
+                        {
+                            <div class="loading-select">
+                                <div class="select-spinner"></div>
+                                <span>Chargement des promotions...</span>
+                            </div>
+                        }
+                        else if (promotions.Any())
+                        {
+                            <InputSelect id="promotionId" class="form-control" @bind-Value="registerModel.PromotionId">
+                                <option value="0">Sélectionnez votre promotion</option>
+                                @foreach (var promotion in promotions)
+                                {
+                                    <option value="@promotion.Id">@promotion.Nom</option>
+                                }
+                            </InputSelect>
+                        }
+                        else
+                        {
+                            <div class="error-select">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <span>Impossible de charger les promotions</span>
+                                <button type="button" class="retry-btn" @onclick="LoadPromotions">
+                                    <i class="fas fa-redo"></i>
+                                    Réessayer
+                                </button>
+                            </div>
+                        }
+                        <!-- <ValidationMessage For="@(() => registerModel.PromotionId)" /> -->
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label for="bio">Bio (optionnel)</label>
                     <InputTextArea id="bio" class="form-control" @bind-Value="registerModel.Bio" placeholder="Parlez-nous de vous..." rows="3" />
-                    <ValidationMessage For="@(() => registerModel.Bio)" />
+                    <!-- <ValidationMessage For="@(() => registerModel.Bio)" /> -->
                 </div>
 
                 <div class="form-group">
@@ -113,7 +136,7 @@
                             <div class="photo-preview">
                                 <img src="@photoPreview" alt="Aperçu photo" />
                                 <button type="button" class="remove-photo-btn" @onclick="RemovePhoto">
-                                    ✕
+                                    <i class="fas fa-times"></i>
                                 </button>
                             </div>
                         }
@@ -121,8 +144,10 @@
                         {
                             <div class="photo-placeholder">
                                 <i class="fas fa-camera"></i>
+                                <p>Cliquez pour ajouter une photo</p>
                             </div>
                         }
+
                         <InputFile id="photo" class="form-control file-input" OnChange="OnPhotoSelected" accept="image/*" />
                         <small class="form-text">Formats acceptés : JPG, PNG, GIF (max 5MB)</small>
                     </div>
@@ -130,7 +155,8 @@
 
                 <div class="step-buttons">
                     <button type="button" class="btn btn-primary btn-full" @onclick="NextStep">
-                        Suivant
+                        <span>Suivant</span>
+                        <i class="fas fa-arrow-right"></i>
                     </button>
                 </div>
             </div>
@@ -142,20 +168,57 @@
 
                 <div class="form-group">
                     <label for="password">Mot de passe *</label>
-                    <InputText id="password" type="password" class="form-control" @bind-Value="registerModel.Password" placeholder="Votre mot de passe" />
-                    <ValidationMessage For="@(() => registerModel.Password)" />
-                    <small class="form-text">Au moins 6 caractères</small>
+                    <div class="password-input-container">
+                        <InputText id="password" type="@(showPassword ? "text" : "password")" class="form-control" @bind-Value="registerModel.Password" placeholder="Votre mot de passe" />
+                        <button type="button" class="password-toggle" @onclick="TogglePasswordVisibility">
+                            <i class="fas @(showPassword ? "fa-eye-slash" : "fa-eye")"></i>
+                        </button>
+                    </div>
+                    <!-- <ValidationMessage For="@(() => registerModel.Password)" /> -->
+
+                    <!-- Indicateur de force du mot de passe -->
+                    @if (!string.IsNullOrEmpty(registerModel.Password))
+                    {
+                        <div class="password-strength">
+                            <div class="strength-bar">
+                                <div class="strength-fill @GetPasswordStrengthClass()"></div>
+                            </div>
+                            <small class="strength-text">@GetPasswordStrengthText()</small>
+                        </div>
+                    }
+                    <small class="form-text">Au moins 6 caractères, incluez des majuscules, minuscules et chiffres</small>
                 </div>
 
                 <div class="form-group">
                     <label for="confirmPassword">Confirmer le mot de passe *</label>
-                    <InputText id="confirmPassword" type="password" class="form-control" @bind-Value="registerModel.ConfirmPassword" placeholder="Confirmez votre mot de passe" />
-                    <ValidationMessage For="@(() => registerModel.ConfirmPassword)" />
+                    <div class="password-input-container">
+                        <InputText id="confirmPassword" type="@(showConfirmPassword ? "text" : "password")" class="form-control" @bind-Value="registerModel.ConfirmPassword" placeholder="Confirmez votre mot de passe" />
+                        <button type="button" class="password-toggle" @onclick="ToggleConfirmPasswordVisibility">
+                            <i class="fas @(showConfirmPassword ? "fa-eye-slash" : "fa-eye")"></i>
+                        </button>
+                    </div>
+                    <!-- <ValidationMessage For="@(() => registerModel.ConfirmPassword)" /> -->
+
+                    @if (!string.IsNullOrEmpty(registerModel.ConfirmPassword) && registerModel.Password != registerModel.ConfirmPassword)
+                    {
+                        <small class="text-danger">
+                            <i class="fas fa-exclamation-circle"></i>
+                            Les mots de passe ne correspondent pas
+                        </small>
+                    }
+                    else if (!string.IsNullOrEmpty(registerModel.ConfirmPassword) && registerModel.Password == registerModel.ConfirmPassword)
+                    {
+                        <small class="text-success">
+                            <i class="fas fa-check-circle"></i>
+                            Les mots de passe correspondent
+                        </small>
+                    }
                 </div>
 
                 <div class="step-buttons">
                     <button type="button" class="btn btn-secondary btn-half" @onclick="PreviousStep">
-                        Précédent
+                        <i class="fas fa-arrow-left"></i>
+                        <span>Précédent</span>
                     </button>
                     <button type="submit" class="btn btn-primary btn-half" disabled="@isLoading">
                         @if (isLoading)
@@ -165,6 +228,7 @@
                         }
                         else
                         {
+                            <i class="fas fa-user-plus"></i>
                             <span>S'inscrire</span>
                         }
                     </button>
@@ -186,6 +250,10 @@
     private string successMessage = string.Empty;
     private string? photoPreview;
     private int currentStep = 1;
+    private List<PromotionModel> promotions = new();
+    private bool isLoadingPromotions = true;
+    private bool showPassword = false;
+    private bool showConfirmPassword = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -193,6 +261,29 @@
         if (await AuthService.IsAuthenticatedAsync())
         {
             Navigation.NavigateTo("/dashboard");
+        }
+
+        // Charger les promotions
+        await LoadPromotions();
+    }
+
+    private async Task LoadPromotions()
+    {
+        isLoadingPromotions = true;
+        StateHasChanged();
+
+        try
+        {
+            promotions = await PromotionService.GetAllPromotionsAsync();
+        }
+        catch (Exception ex)
+        {
+            errors.Add($"Erreur lors du chargement des promotions: {ex.Message}");
+        }
+        finally
+        {
+            isLoadingPromotions = false;
+            StateHasChanged();
         }
     }
 
@@ -203,6 +294,7 @@
         // Validation de l'étape 1
         if (!ValidateStep1())
         {
+            StateHasChanged(); // Important pour afficher les erreurs
             return;
         }
 
@@ -245,6 +337,57 @@
         }
 
         return true;
+    }
+
+    private void TogglePasswordVisibility()
+    {
+        showPassword = !showPassword;
+    }
+
+    private void ToggleConfirmPasswordVisibility()
+    {
+        showConfirmPassword = !showConfirmPassword;
+    }
+
+    private string GetPasswordStrengthClass()
+    {
+        var strength = GetPasswordStrength();
+        return strength switch
+        {
+            1 => "weak",
+            2 => "fair",
+            3 => "good",
+            4 => "strong",
+            _ => "weak"
+        };
+    }
+
+    private string GetPasswordStrengthText()
+    {
+        var strength = GetPasswordStrength();
+        return strength switch
+        {
+            1 => "Faible",
+            2 => "Moyen",
+            3 => "Bon",
+            4 => "Fort",
+            _ => "Très faible"
+        };
+    }
+
+    private int GetPasswordStrength()
+    {
+        if (string.IsNullOrEmpty(registerModel.Password))
+            return 0;
+
+        var score = 0;
+        if (registerModel.Password.Length >= 6) score++;
+        if (registerModel.Password.Any(char.IsUpper)) score++;
+        if (registerModel.Password.Any(char.IsLower)) score++;
+        if (registerModel.Password.Any(char.IsDigit)) score++;
+        if (registerModel.Password.Any(c => !char.IsLetterOrDigit(c))) score++;
+
+        return Math.Min(score, 4);
     }
 
     private bool IsValidEmail(string email)
@@ -395,6 +538,7 @@
         finally
         {
             isLoading = false;
+            StateHasChanged(); // Important pour mettre à jour l'UI
         }
     }
 }
