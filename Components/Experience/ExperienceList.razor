@@ -1,0 +1,82 @@
+AlumniConnect.Front/Components/Experience/ExperienceList.razor
+@using AlumniConnect.Front.Models
+
+@if (Experiences == null || !Experiences.Any())
+{
+    <div class="empty-experience">
+        <i class="fas fa-briefcase"></i>
+        <span>Aucune expérience professionnelle renseignée.</span>
+    </div>
+}
+else
+{
+    <div class="experience-list">
+        @foreach (var exp in Experiences.OrderByDescending(e => e.DateDebut))
+        {
+            <div class="experience-card">
+                <div class="exp-header">
+                    <div class="exp-title">
+                        <strong>@exp.Poste</strong>
+                        <span class="exp-company">@exp.Entreprise</span>
+                    </div>
+                    <span class="exp-status">
+                        @if (exp.EnCours)
+                        {
+                            <span class="badge badge-success">En cours</span>
+                        }
+                        else if (!string.IsNullOrWhiteSpace(exp.Duree))
+                        {
+                            <span class="badge badge-secondary">@exp.Duree</span>
+                        }
+                        else if (exp.DateDebut != default && exp.DateFin.HasValue)
+                        {
+                            <span class="badge badge-secondary">@GetDuration(exp.DateDebut, exp.DateFin.Value)</span>
+                        }
+                    </span>
+                </div>
+                <div class="exp-dates">
+                    <span>
+                        @exp.DateDebut.ToString("MMM yyyy") -
+                        @(exp.EnCours ? "Aujourd'hui" : (exp.DateFin.HasValue ? exp.DateFin.Value.ToString("MMM yyyy") : ""))
+                    </span>
+                </div>
+                <div class="exp-location">
+                    <i class="fas fa-map-marker-alt"></i> @exp.Localisation
+                </div>
+                @if (!string.IsNullOrWhiteSpace(exp.Description))
+                {
+                    <div class="exp-description">
+                        @exp.Description
+                    </div>
+                }
+                @if (!string.IsNullOrWhiteSpace(exp.TypeContrat))
+                {
+                    <div class="exp-contrat">
+                        <span>Type de contrat : @exp.TypeContrat</span>
+                    </div>
+                }
+                @if (!string.IsNullOrWhiteSpace(exp.Secteur))
+                {
+                    <div class="exp-secteur">
+                        <span>Secteur : @exp.Secteur</span>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+}
+
+@code {
+    [Parameter]
+    public IEnumerable<ExperienceModel>? Experiences { get; set; }
+
+    private string GetDuration(DateTime start, DateTime end)
+    {
+        var months = ((end.Year - start.Year) * 12) + end.Month - start.Month;
+        if (months < 1) return "Moins d'un mois";
+        if (months < 12) return $"{months}m";
+        var years = months / 12;
+        var remMonths = months % 12;
+        return remMonths == 0 ? $"{years}a" : $"{years}a {remMonths}m";
+    }
+}

@@ -101,14 +101,14 @@
                                 <h3><i class="fas fa-briefcase"></i> Parcours Professionnel</h3>
                             </div>
 
-                            @if (emplois == null)
+                            @if (experiences == null)
                             {
                                 <div class="loading-content">
                                     <div class="spinner"></div>
                                     <p>Chargement du parcours professionnel...</p>
                                 </div>
                             }
-                            else if (emplois.Count == 0)
+                            else if (experiences.Count == 0)
                             {
                                 <div class="empty-state">
                                     <div class="empty-icon">
@@ -120,67 +120,51 @@
                             }
                             else
                             {
-                                <div class="timeline">
-                                    @foreach (var (emploi, index) in emplois.Select((e, i) => (e, i)))
+                                <div class="experience-list-grid">
+                                    @foreach (var exp in experiences.OrderByDescending(e => e.DateDebut))
                                     {
-                                        <div class="timeline-item @(index == 0 ? "current" : "")">
-                                            <div class="timeline-marker">
-                                                <div class="timeline-dot @(index == 0 ? "active" : "")">
-                                                    @if (index == 0)
-                                                    {
-                                                        <i class="fas fa-circle"></i>
-                                                    }
-                                                    else
-                                                    {
-                                                        <i class="fas fa-check"></i>
-                                                    }
+                                        <div class="experience-card">
+                                            <div class="exp-card-header">
+                                                <div class="exp-card-title">
+                                                    <strong>@exp.Poste</strong>
+                                                    <span class="exp-card-company">@exp.Entreprise</span>
                                                 </div>
+                                                <span class="exp-card-status">
+                                                    @if (exp.EnCours)
+                                                    {
+                                                        <span class="badge badge-success">En cours</span>
+                                                    }
+                                                    else if (!string.IsNullOrWhiteSpace(exp.Duree))
+                                                    {
+                                                        <span class="badge badge-secondary">@exp.Duree</span>
+                                                    }
+                                                </span>
                                             </div>
-                                            <div class="timeline-content">
-                                                <div class="emploi-card enhanced">
-                                                    <div class="emploi-header">
-                                                        <div class="emploi-main-info">
-                                                            <h4 class="emploi-title">@emploi.Titre</h4>
-                                                            <p class="emploi-company">
-                                                                <i class="fas fa-building"></i>
-                                                                @emploi.Entreprise
-                                                            </p>
-                                                        </div>
-                                                        <div class="emploi-duration">
-                                                            <span class="duration-badge @(index == 0 ? "current" : "")">
-                                                                @if (index == 0)
-                                                                {
-                                                                    <i class="fas fa-clock"></i>
-                                                                    <span>En cours</span>
-                                                                }
-                                                                else
-                                                                {
-                                                                    <span>@GetDuration(emploi.DateDebut, emploi.DateFin)</span>
-                                                                }
-                                                            </span>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="emploi-period">
-                                                        <i class="fas fa-calendar-alt"></i>
-                                                        <span>@emploi.DateDebut.ToString("MMM yyyy") - @emploi.DateFin.ToString("MMM yyyy")</span>
-                                                    </div>
-
-                                                    @if (!string.IsNullOrEmpty(emploi.Description))
-                                                    {
-                                                        <div class="emploi-description">
-                                                            @emploi.Description
-                                                        </div>
-                                                    }
-
-                                                    @if (!string.IsNullOrEmpty(emploi.Localisation))
-                                                    {
-                                                        <div class="emploi-location">
-                                                            <i class="fas fa-map-marker-alt"></i>
-                                                            <span>@emploi.Localisation</span>
-                                                        </div>
-                                                    }
+                                            <div class="exp-card-dates">
+                                                <i class="fas fa-calendar-alt"></i>
+                                                <span>
+                                                    @exp.DateDebut.ToString("MMM yyyy") -
+                                                    @(exp.EnCours ? "Aujourd'hui" : (exp.DateFin.HasValue ? exp.DateFin.Value.ToString("MMM yyyy") : ""))
+                                                </span>
+                                            </div>
+                                            <div class="exp-card-location">
+                                                <i class="fas fa-map-marker-alt"></i> @exp.Localisation
+                                            </div>
+                                            @if (!string.IsNullOrWhiteSpace(exp.Description))
+                                            {
+                                                <div class="exp-card-description">
+                                                    @exp.Description
                                                 </div>
+                                            }
+                                            <div class="exp-card-details">
+                                                @if (!string.IsNullOrWhiteSpace(exp.TypeContrat))
+                                                {
+                                                    <span class="exp-card-contrat">Contrat : @exp.TypeContrat</span>
+                                                }
+                                                @if (!string.IsNullOrWhiteSpace(exp.Secteur))
+                                                {
+                                                    <span class="exp-card-secteur">Secteur : @exp.Secteur</span>
+                                                }
                                             </div>
                                         </div>
                                     }
@@ -299,12 +283,110 @@
     </div>
 </div>
 
+<style>
+    .experience-list-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+    }
+    .experience-card {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        padding: 1.5rem 1.2rem;
+        display: flex;
+        flex-direction: column;
+        transition: box-shadow 0.2s;
+        border: 1px solid #e2e8f0;
+        min-height: 220px;
+        position: relative;
+    }
+    .experience-card:hover {
+        box-shadow: 0 4px 16px rgba(0,0,0,0.13);
+        border-color: #cbd5e1;
+    }
+    .exp-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.7rem;
+    }
+    .exp-card-title {
+        display: flex;
+        flex-direction: column;
+    }
+    .exp-card-title strong {
+        font-size: 1.18rem;
+        color: #2d3748;
+    }
+    .exp-card-company {
+        color: #4a5568;
+        font-size: 1rem;
+        margin-top: 2px;
+        font-weight: 500;
+    }
+    .exp-card-status .badge {
+        font-size: 0.95rem;
+        padding: 0.2em 0.7em;
+        border-radius: 8px;
+        margin-left: 0.5em;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+    }
+    .badge-success {
+        background: #38a169;
+        color: #fff;
+    }
+    .badge-secondary {
+        background: #a0aec0;
+        color: #fff;
+    }
+    .exp-card-dates, .exp-card-location {
+        font-size: 0.98rem;
+        color: #718096;
+        margin-bottom: 0.4rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4em;
+    }
+    .exp-card-description {
+        margin: 0.7rem 0;
+        color: #2d3748;
+        font-size: 1.05rem;
+        line-height: 1.6;
+    }
+    .exp-card-details {
+        display: flex;
+        gap: 1.2em;
+        font-size: 0.97rem;
+        color: #4a5568;
+        margin-top: 0.5rem;
+    }
+    .exp-card-contrat, .exp-card-secteur {
+        background: #edf2f7;
+        padding: 0.2em 0.7em;
+        border-radius: 7px;
+        font-size: 0.97rem;
+        font-weight: 500;
+    }
+    @@media (max-width: 700px) {
+        .experience-list-grid {
+            grid-template-columns: 1fr;
+        }
+        .experience-card {
+            padding: 1.1rem 0.7rem;
+        }
+    }
+</style>
+
 @code {
     [Parameter] public string Id { get; set; } = string.Empty;
     private AlumniModel? alumni;
     private List<EmploiModel>? emplois;
     private List<EventModel>? events;
     private List<TemoignageModel>? temoignages;
+    private List<ExperienceModel>? experiences;
 
     protected override async Task OnInitializedAsync()
     {
@@ -316,6 +398,7 @@
                 emplois = await Http.GetFromJsonAsync<List<EmploiModel>>($"/api/emplois/user/{Id}");
                 temoignages = await Http.GetFromJsonAsync<List<TemoignageModel>>($"/api/temoignages/user/{Id}");
                 events = await Http.GetFromJsonAsync<List<EventModel>>($"/api/events/user/{Id}");
+                experiences = await Http.GetFromJsonAsync<List<ExperienceModel>>($"/api/experiences/user/{Id}");
             }
             catch (Exception ex)
             {
