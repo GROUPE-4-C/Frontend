@@ -1,4 +1,4 @@
-Architecture de dossiers recommandée pour Blazor WebAssembly
+Architecture de dossiers recommandée pour Blazor WebAssembly:
 
 ```plaintext
 AlumniConnect.Front/
