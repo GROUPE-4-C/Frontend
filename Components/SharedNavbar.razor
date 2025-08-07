@@ -1,23 +1,7 @@
 @* Composant navbar partagé pour uniformiser l'interface *@
-
-<div class="login-overlay" id="loginOverlay">
-    <div class="login-modal">
-        <div class="modal-icon">
-            <i class="fas fa-lock"></i>
-        </div>
-        <h3>Connexion requise</h3>
-        <p>Rejoignez la communauté AlumniConnect pour accéder à toutes les fonctionnalités exclusives.</p>
-        <div class="modal-actions">
-            <a href="/Login" class="btn btn-primary">
-                <i class="fas fa-sign-in-alt"></i>
-                Se connecter
-            </a>
-            <button class="btn btn-secondary" onclick="closeLoginModal()">
-                Annuler
-            </button>
-        </div>
-    </div>
-</div>
+@using AlumniConnect.Front.Models
+@inject AlumniConnect.Front.Services.AuthService AuthService
+@inject NavigationManager NavigationManager
 
 <!-- Header moderne -->
 <header class="modern-header">
@@ -39,7 +23,7 @@
                 <input type="text"
                        class="search-input"
                        placeholder="@GetSearchPlaceholder()"
-                       onclick="@(RequireLogin ? "requireLogin()" : "")">
+                       @onclick="@(() => { if(RequireLogin) NavigationManager.NavigateTo("/login"); })">
                 <div class="search-suggestions" id="searchSuggestions">
                     <!-- Suggestions dynamiques -->
                 </div>
@@ -86,7 +70,7 @@
                     <span class="nav-label">Événements</span>
                 </a>
 
-                <div class="nav-link @(ActivePage == "messages" ? "active" : "")" onclick="requireLogin()">
+                <div class="nav-link @(ActivePage == "messages" ? "active" : "")" @onclick="@(() => NavigationManager.NavigateTo("/login"))">
                     <div class="nav-icon">
                         <i class="fas fa-comment-dots"></i>
                         <span class="nav-badge notification">3</span>
@@ -94,7 +78,7 @@
                     <span class="nav-label">Messages</span>
                 </div>
 
-                <div class="nav-link @(ActivePage == "notifications" ? "active" : "")" onclick="requireLogin()">
+                <div class="nav-link @(ActivePage == "notifications" ? "active" : "")" @onclick="@(() => NavigationManager.NavigateTo("/login"))">
                     <div class="nav-icon">
                         <i class="fas fa-bell"></i>
                         <span class="nav-badge notification">5</span>
@@ -107,17 +91,34 @@
         <!-- User Section -->
         <div class="user-section">
             <div class="user-menu">
-                <a href="/profile" class="profile-link @(ActivePage == "profile" ? "active" : "")">
-                    <div class="profile-avatar">
-                        <i class="fas fa-user-circle"></i>
-                    </div>
-                    <span class="profile-name">Profil</span>
-                </a>
+                @if (currentUser != null)
+                {
+                    <a href="/profile" class="profile-link @(ActivePage == "profile" ? "active" : "")">
+                        <div class="profile-avatar">
+                            @if (!string.IsNullOrEmpty(currentUser.PhotoUrl))
+                            {
+                                <img src="@GetFullPhotoUrl(currentUser.PhotoUrl)" alt="Avatar" class="avatar-img" />
+                            }
+                            else
+                            {
+                                <img src="images/default-avatar.png" alt="Avatar" class="avatar-img" />
+                            }
+                        </div>
+                        <span class="profile-name">@currentUser.FullName</span>
+                    </a>
 
-                <a href="/login" class="login-button">
-                    <i class="fas fa-sign-in-alt"></i>
-                    <span>Connexion</span>
-                </a>
+                    <button class="login-button" @onclick="Logout">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Déconnexion</span>
+                    </button>
+                }
+                else
+                {
+                    <a href="/login" class="login-button">
+                        <i class="fas fa-sign-in-alt"></i>
+                        <span>Connexion</span>
+                    </a>
+                }
             </div>
         </div>
 
@@ -185,27 +186,34 @@
     </div>
 </header>
 
-<script>
-    function requireLogin() {
-        document.getElementById('loginOverlay').style.display = 'flex';
-    }
 
-    function closeLoginModal() {
-        document.getElementById('loginOverlay').style.display = 'none';
-    }
-
-    // Close modal when clicking outside
-    document.addEventListener('click', function(event) {
-        const overlay = document.getElementById('loginOverlay');
-        if (event.target === overlay) {
-            closeLoginModal();
-        }
-    });
-</script>
 
 @code {
     [Parameter] public string ActivePage { get; set; } = "";
     [Parameter] public bool RequireLogin { get; set; } = true;
+    private UserInfo? currentUser;
+
+    private string GetFullPhotoUrl(string? photoUrl)
+    {
+        if (string.IsNullOrWhiteSpace(photoUrl))
+            return "images/default-avatar.png";
+
+        if (photoUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+            return photoUrl;
+
+        return $"http://localhost:5175{photoUrl}";
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        currentUser = await AuthService.GetCurrentUserAsync();
+    }
+
+    private async Task Logout()
+    {
+        await AuthService.LogoutAsync();
+        NavigationManager.NavigateTo("/", true);
+    }
 
     private string GetSearchPlaceholder()
     {

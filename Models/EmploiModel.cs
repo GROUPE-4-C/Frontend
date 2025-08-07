@@ -30,5 +30,8 @@ namespace AlumniConnect.Front.Models
 
         public string UserId { get; set; } = string.Empty;
         public bool EstActif { get; set; } = true;
+
+        public string? CreatorName { get; set; }
+        public string? CreatorEmail { get; set; }
     }
 }

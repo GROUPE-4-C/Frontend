@@ -1,5 +1,8 @@
 @page "/dashboard"
 @layout MainLayout
+@using AlumniConnect.Front.Models
+@using AlumniConnect.Front.Utils
+@inject HttpClient Http
 
 <link href="css/shared-navbar.css" rel="stylesheet" />
 
@@ -53,57 +56,73 @@
             </div>
         </div>
 
-        <!-- Testimonial Post -->
-        <article class="post testimonial-post">
-            <div class="post-header">
-                <div class="post-avatar" style="background: linear-gradient(135deg, #9f7aea, #805ad5);">FK</div>
-                <div class="post-author-info">
-                    <div class="post-author-name">Fela Kuti</div>
-                    <div class="post-author-title">Chef de projet • Promo 2017</div>
-                    <div class="post-time">
-                        <span>30min</span>
-                        <i class="fas fa-globe-americas"></i>
+        <!-- Testimonials Feed -->
+        @if (temoignages == null)
+        {
+            <div class="loading-state">
+                <div class="loading-spinner"></div>
+                <p>Chargement des témoignages...</p>
+            </div>
+        }
+        else if (!temoignages.Any())
+        {
+            <div class="empty-state">
+                <i class="fas fa-star"></i>
+                <h3>Aucun témoignage</h3>
+                <p>Les témoignages apparaîtront ici.</p>
+            </div>
+        }
+        else
+        {
+            @foreach (var temoignage in temoignages.OrderByDescending(t => t.Date))
+            {
+                <article class="post testimonial-post">
+                    <div class="post-header">
+                        <div class="post-avatar" style="background: linear-gradient(135deg, #9f7aea, #805ad5);">
+                            @if (!string.IsNullOrEmpty(temoignage.PhotoUrl))
+                            {
+                                <img src="@(PhotoUrlHelper.GetFullPhotoUrl(temoignage.PhotoUrl))" alt="Avatar" class="avatar-img" />
+                            }
+                            else
+                            {
+                                <span>@(string.IsNullOrEmpty(temoignage.FullName) ? "??" : (temoignage.FullName.Length >= 2 ? temoignage.FullName.Substring(0, 2) : temoignage.FullName))</span>
+                            }
+                        </div>
+                        <div class="post-author-info">
+                            <div class="post-author-name">@temoignage.FullName</div>
+                            <div class="post-author-title">@temoignage.Profession • @temoignage.Promotion</div>
+                            <div class="post-time">
+                                <span>@FormatDate(temoignage.Date)</span>
+                                <i class="fas fa-globe-americas"></i>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
 
-            <div class="post-content">
-                <div class="testimonial-badge">
-                    <i class="fas fa-star"></i>
-                    Témoignage
-                </div>
+                    <div class="post-content">
+                        <div class="testimonial-badge">
+                            <i class="fas fa-star"></i>
+                            Témoignage
+                        </div>
 
-                ⭐ Je recommande vivement <strong>Kintu Kidda</strong> (Promo 2019) pour ses compétences exceptionnelles en développement web !
-                <br><br>
-                J'ai eu la chance de travailler avec Kintu sur plusieurs projets complexes. Sa maîtrise technique, sa capacité d'adaptation et son esprit d'équipe font d'elle une développeuse hors pair.
-                <br><br>
-                Kintu a notamment développé une solution innovante qui a permis d'augmenter les performances de notre application de 40%. Son professionnalisme et sa créativité sont remarquables.
-                <br><br>
-                <strong>Compétences clés :</strong> React, Node.js, Architecture cloud, Leadership technique
-                <br><br>
-                <strong>#Témoignage #Développement #React #AlumniRecommendation</strong>
-            </div>
+                        @((MarkupString)FormatContent(temoignage.Contenu))
 
-            <div class="post-stats">
-                <span>⭐ 23 réactions • 8 commentaires</span>
-                <span>5 partages</span>
-            </div>
+                        @if (!string.IsNullOrEmpty(temoignage.MotsCles))
+                        {
+                            <br><br>
+                            <div class="tags">
+                                <span class="tag">#Témoignage</span>
+                                @foreach (var tag in temoignage.MotsCles.Split(','))
+                                {
+                                    <span class="tag">#@tag.Trim()</span>
+                                }
+                            </div>
+                        }
+                    </div>
 
-            <div class="post-actions disabled" onclick="requireLogin()">
-                <div class="post-action like">
-                    <i class="far fa-thumbs-up"></i>
-                    J'aime
-                </div>
-                <div class="post-action comment">
-                    <i class="far fa-comment"></i>
-                    Commenter
-                </div>
-                <div class="post-action share">
-                    <i class="fas fa-share"></i>
-                    Partager
-                </div>
-            </div> <!-- post-actions -->
-        </article>
+
+                </article>
+            }
+        }
     </main>
 </div>
 
@@ -124,3 +143,97 @@
         }
     });
 </script>
+
+@code {
+    private List<TemoignageModel>? temoignages;
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            temoignages = await Http.GetFromJsonAsync<List<TemoignageModel>>("/api/temoignages");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erreur lors du chargement des témoignages: {ex.Message}");
+            temoignages = new List<TemoignageModel>();
+        }
+    }
+
+    private string FormatDate(DateTime date)
+    {
+        var difference = DateTime.Now - date;
+
+        if (difference.TotalMinutes < 60)
+            return $"{(int)difference.TotalMinutes}min";
+        if (difference.TotalHours < 24)
+            return $"{(int)difference.TotalHours}h";
+        if (difference.TotalDays < 30)
+            return $"{(int)difference.TotalDays}j";
+        return date.ToString("dd MMM yyyy");
+    }
+
+    private string FormatContent(string content)
+    {
+        if (string.IsNullOrEmpty(content)) return "";
+        return content.Replace("\n", "<br>");
+    }
+}
+
+<style>
+    .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .tag {
+        background: #f3f4f6;
+        color: #4b5563;
+        padding: 4px 12px;
+        border-radius: 16px;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    .loading-state, .empty-state {
+        text-align: center;
+        padding: 40px;
+        color: #6b7280;
+    }
+
+    .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid #f3f4f6;
+        border-top: 4px solid #6366f1;
+        border-radius: 50%;
+        margin: 0 auto 16px;
+        animation: spin 1s linear infinite;
+    }
+
+    .avatar-img {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    @@keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .empty-state i {
+        font-size: 48px;
+        margin-bottom: 16px;
+        color: #9ca3af;
+    }
+
+    .empty-state h3 {
+        margin-bottom: 8px;
+        font-weight: 600;
+    }
+</style>

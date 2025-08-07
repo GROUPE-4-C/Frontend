@@ -10,6 +10,58 @@
 
 <SharedNavbar ActivePage="reseau" RequireLogin="false" />
 
+<style>
+    .alumni-container {
+        height: calc(100vh - 64px);
+        overflow: hidden;
+        padding: 2rem;
+    }
+
+    .content-wrapper {
+        display: flex;
+        gap: 2rem;
+        height: 100%;
+    }
+
+    .sidebar {
+        position: sticky;
+        top: 2rem;
+        height: fit-content;
+        min-width: 300px;
+        max-width: 300px;
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .main-content {
+        flex: 1;
+        overflow-y: auto;
+        padding-right: 1rem;
+        height: calc(100vh - 100px);
+    }
+
+    /* Scrollbar styles */
+    .main-content::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .main-content::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+
+    .main-content::-webkit-scrollbar-thumb {
+        background: #48bb78;
+        border-radius: 4px;
+    }
+
+    .main-content::-webkit-scrollbar-thumb:hover {
+        background: #38a169;
+    }
+</style>
+
 <div class="alumni-container">
     <div class="content-wrapper">
         <!-- Sidebar -->
@@ -23,7 +75,7 @@
             <div class="search-section">
                 <label class="search-label">🔍 Rechercher</label>
                 <input type="text"
-                       class="search-input"
+                       class="search-input-d"
                        @bind="search"
                        placeholder="Nom, profession..." />
             </div>
@@ -80,7 +132,7 @@
             }
             else
             {
-                <div class="alumni-grid">
+                <div class="alumni-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
                     @foreach (var alumni in alumniListFiltered)
                     {
                         <div class="alumni-card" style="cursor:pointer"
@@ -121,21 +173,29 @@
 </div>
 
 @code {
-    private List<AlumniModel> alumniList;
+    private List<AlumniModel>? alumniList;
     private string search = "";
 
     protected override async Task OnInitializedAsync()
     {
-        alumniList = await Http.GetFromJsonAsync<List<AlumniModel>>("/api/alumni/all");
+        try
+        {
+            alumniList = await Http.GetFromJsonAsync<List<AlumniModel>>("/api/alumni/all") ?? new List<AlumniModel>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading alumni: {ex.Message}");
+            alumniList = new List<AlumniModel>();
+        }
     }
 
     private IEnumerable<AlumniModel> alumniListFiltered =>
         string.IsNullOrWhiteSpace(search)
-            ? alumniList ?? new List<AlumniModel>()
+            ? alumniList ?? Enumerable.Empty<AlumniModel>()
             : alumniList?.Where(a =>
                 (a.FullName ?? "").Contains(search, StringComparison.OrdinalIgnoreCase) ||
                 (a.Profession ?? "").Contains(search, StringComparison.OrdinalIgnoreCase)
-            ) ?? new List<AlumniModel>();
+            ) ?? Enumerable.Empty<AlumniModel>();
 
     private string GetFullPhotoUrl(string? photoUrl)
     {

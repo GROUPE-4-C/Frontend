@@ -222,27 +222,27 @@ namespace AlumniConnect.Front.Services
             }
         }
 
-        private async Task<ApiResponse<T>> HandleErrorResponse<T>(HttpResponseMessage response, string errorContent)
+        private Task<ApiResponse<T>> HandleErrorResponse<T>(HttpResponseMessage response, string errorContent)
         {
             try
             {
                 // Tenter de désérialiser la réponse JSON d'erreur
                 var errorResponse = JsonSerializer.Deserialize<dynamic>(errorContent);
-                return new ApiResponse<T>
+                return Task.FromResult(new ApiResponse<T>
                 {
                     Success = false,
                     Message = errorContent,
                     Errors = new[] { errorContent }
-                };
+                });
             }
             catch
             {
-                return new ApiResponse<T>
+                return Task.FromResult(new ApiResponse<T>
                 {
                     Success = false,
                     Message = errorContent,
                     Errors = new[] { errorContent }
-                };
+                });
             }
         }
 

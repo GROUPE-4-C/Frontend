@@ -1,287 +1,275 @@
 @page "/alumni/{Id}"
 @using AlumniConnect.Front.Models
 @inject HttpClient Http
+<link href="css/profile.css" rel="stylesheet" />
 <link href="css/shared-navbar.css" rel="stylesheet" />
-<link href="css/alumni-page.css" rel="stylesheet" />
-<link href="css/alumni-profile.css" rel="stylesheet" />
+<link href="css/body-layout.css" rel="stylesheet" />
+<link href="css/dashboard.css" rel="stylesheet" />
 
 <SharedNavbar ActivePage="reseau" RequireLogin="false" />
 
-<div class="alumni-container">
-    <div class="content-wrapper">
-        <aside class="sidebar">
-            <a href="/alumni" class="back-link">
-                <i class="fas fa-arrow-left"></i>
-                <span>Retour à la liste</span>
-            </a>
-        </aside>
+<div class="main-container">
+    <aside class="profile-card">
+        @if (alumni != null)
+        {
+            <!-- Photo de profil avec badge de statut -->
+            <div class="avatar-container">
+                <img class="profile-avatar" src="@GetFullPhotoUrl(alumni.PhotoUrl)" alt="Avatar" />
+                <div class="status-badge online">
+                    <i class="fas fa-circle"></i>
+                </div>
+            </div>
 
-        <section class="main-content">
-            @if (alumni == null)
+            <!-- Informations principales -->
+            <div class="profile-header">
+                <h2>@alumni.FullName</h2>
+                <div class="profile-title">@alumni.Profession</div>
+                <div class="profile-promo">
+                    <i class="fas fa-graduation-cap"></i>
+                    @alumni.Promotion
+                </div>
+            </div>
+
+            <!-- Bio avec style amélioré -->
+            @if (!string.IsNullOrEmpty(alumni.Bio))
             {
-                <div class="loading-state-modern">
-                    <div class="loading-spinner-modern"></div>
-                    <p>Chargement du profil...</p>
+                <div class="profile-bio">
+                    <i class="fas fa-quote-left quote-icon"></i>
+                    <p>@alumni.Bio</p>
+                </div>
+            }
+
+            <!-- Contact et statistiques -->
+            <div class="profile-stats">
+                <div class="stat-item">
+                    <div class="stat-number">@(emplois?.Count ?? 0)</div>
+                    <div class="stat-label">Emplois</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">@(events?.Count ?? 0)</div>
+                    <div class="stat-label">Événements</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">@(temoignages?.Count ?? 0)</div>
+                    <div class="stat-label">Témoignages</div>
+                </div>
+            </div>
+
+            <div class="profile-contact">
+                <div class="contact-item">
+                    <i class="fas fa-envelope"></i>
+                    <span>@alumni.Email</span>
+                </div>
+            </div>
+
+            <!-- Actions rapides -->
+            <div class="profile-actions">
+                <button class="action-btn primary">
+                    <i class="fas fa-user-plus"></i>
+                    Ajouter au réseau
+                </button>
+                <button class="action-btn secondary">
+                    <i class="fas fa-envelope"></i>
+                    Contacter
+                </button>
+            </div>
+        }
+        else
+        {
+            <div class="loading-skeleton">
+                <div class="skeleton-avatar"></div>
+                <div class="skeleton-text"></div>
+                <div class="skeleton-text short"></div>
+            </div>
+        }
+    </aside>
+
+    <main class="profile-feed">
+        <!-- Section Parcours Professionnel -->
+        <section class="career-timeline">
+            <div class="section-header">
+                <h3><i class="fas fa-briefcase"></i> Parcours Professionnel</h3>
+            </div>
+
+            @if (experiences == null)
+            {
+                <div class="loading-content">
+                    <div class="spinner"></div>
+                    <p>Chargement du parcours professionnel...</p>
+                </div>
+            }
+            else if (experiences.Count == 0)
+            {
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-briefcase"></i>
+                    </div>
+                    <h4>Aucune expérience professionnelle</h4>
+                    <p>@alumni?.FullName n'a pas encore ajouté d'expériences professionnelles</p>
                 </div>
             }
             else
             {
-                <div class="alumni-profile-container">
-                    <!-- Carte de profil -->
-                    <div class="alumni-profile-card">
-                        <!-- Avatar avec badge -->
-                        <div class="avatar-container">
-                            <img class="profile-avatar" src="@GetFullPhotoUrl(alumni.PhotoUrl)" alt="Avatar" />
-                            <div class="status-badge online">
-                                <i class="fas fa-circle"></i>
-                            </div>
-                        </div>
-
-                        <!-- Informations principales -->
-                        <div class="profile-header">
-                            <h2>@alumni.FullName</h2>
-                            <div class="profile-title">@alumni.Profession</div>
-                            <div class="profile-promo">
-                                <i class="fas fa-graduation-cap"></i>
-                                @alumni.Promotion
-                            </div>
-                        </div>
-
-                        <!-- Bio -->
-                        @if (!string.IsNullOrEmpty(alumni.Bio))
-                        {
-                            <div class="profile-bio">
-                                <i class="fas fa-quote-left quote-icon"></i>
-                                <p>@alumni.Bio</p>
-                            </div>
-                        }
-
-                        <!-- Statistiques -->
-                        <div class="profile-stats">
-                            <div class="stat-item">
-                                <div class="stat-number">@(emplois?.Count ?? 0)</div>
-                                <div class="stat-label">Emplois</div>
-                            </div>
-                            <div class="stat-item">
-                                <div class="stat-number">@(events?.Count ?? 0)</div>
-                                <div class="stat-label">Événements</div>
-                            </div>
-                            <div class="stat-item">
-                                <div class="stat-number">@(temoignages?.Count ?? 0)</div>
-                                <div class="stat-label">Témoignages</div>
-                            </div>
-                        </div>
-
-                        <!-- Contact -->
-                        <div class="profile-contact">
-                            <div class="contact-item">
-                                <i class="fas fa-envelope"></i>
-                                <span>@alumni.Email</span>
-                            </div>
-                        </div>
-
-                        <!-- Actions -->
-                        <div class="profile-actions">
-                            <button class="action-btn primary">
-                                <i class="fas fa-user-plus"></i>
-                                Ajouter au réseau
-                            </button>
-                            <button class="action-btn secondary">
-                                <i class="fas fa-envelope"></i>
-                                Contacter
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Contenu principal -->
-                    <div class="alumni-profile-feed">
-                        <!-- Section Parcours Professionnel -->
-                        <section class="career-timeline">
-                            <div class="section-header">
-                                <h3><i class="fas fa-briefcase"></i> Parcours Professionnel</h3>
-                            </div>
-
-                            @if (experiences == null)
-                            {
-                                <div class="loading-content">
-                                    <div class="spinner"></div>
-                                    <p>Chargement du parcours professionnel...</p>
+                <div class="experience-list-grid">
+                    @foreach (var exp in experiences.OrderByDescending(e => e.DateDebut))
+                    {
+                        <div class="experience-card">
+                            <div class="exp-card-header">
+                                <div class="exp-card-title">
+                                    <strong>@exp.Poste</strong>
+                                    <span class="exp-card-company">@exp.Entreprise</span>
                                 </div>
-                            }
-                            else if (experiences.Count == 0)
-                            {
-                                <div class="empty-state">
-                                    <div class="empty-icon">
-                                        <i class="fas fa-briefcase"></i>
-                                    </div>
-                                    <h4>Aucune expérience professionnelle</h4>
-                                    <p>@alumni.FullName n'a pas encore ajouté d'expériences professionnelles</p>
-                                </div>
-                            }
-                            else
-                            {
-                                <div class="experience-list-grid">
-                                    @foreach (var exp in experiences.OrderByDescending(e => e.DateDebut))
+                                <span class="exp-card-status">
+                                    @if (exp.EnCours)
                                     {
-                                        <div class="experience-card">
-                                            <div class="exp-card-header">
-                                                <div class="exp-card-title">
-                                                    <strong>@exp.Poste</strong>
-                                                    <span class="exp-card-company">@exp.Entreprise</span>
-                                                </div>
-                                                <span class="exp-card-status">
-                                                    @if (exp.EnCours)
-                                                    {
-                                                        <span class="badge badge-success">En cours</span>
-                                                    }
-                                                    else if (!string.IsNullOrWhiteSpace(exp.Duree))
-                                                    {
-                                                        <span class="badge badge-secondary">@exp.Duree</span>
-                                                    }
-                                                </span>
-                                            </div>
-                                            <div class="exp-card-dates">
-                                                <i class="fas fa-calendar-alt"></i>
-                                                <span>
-                                                    @exp.DateDebut.ToString("MMM yyyy") -
-                                                    @(exp.EnCours ? "Aujourd'hui" : (exp.DateFin.HasValue ? exp.DateFin.Value.ToString("MMM yyyy") : ""))
-                                                </span>
-                                            </div>
-                                            <div class="exp-card-location">
-                                                <i class="fas fa-map-marker-alt"></i> @exp.Localisation
-                                            </div>
-                                            @if (!string.IsNullOrWhiteSpace(exp.Description))
-                                            {
-                                                <div class="exp-card-description">
-                                                    @exp.Description
-                                                </div>
-                                            }
-                                            <div class="exp-card-details">
-                                                @if (!string.IsNullOrWhiteSpace(exp.TypeContrat))
-                                                {
-                                                    <span class="exp-card-contrat">Contrat : @exp.TypeContrat</span>
-                                                }
-                                                @if (!string.IsNullOrWhiteSpace(exp.Secteur))
-                                                {
-                                                    <span class="exp-card-secteur">Secteur : @exp.Secteur</span>
-                                                }
-                                            </div>
-                                        </div>
+                                        <span class="badge badge-success">En cours</span>
                                     }
-                                </div>
-                            }
-                        </section>
-
-                        <!-- Section Événements -->
-                        <section class="events-section">
-                            <div class="section-header">
-                                <h3><i class="fas fa-calendar-alt"></i> Événements</h3>
-                            </div>
-
-                            @if (events == null)
-                            {
-                                <div class="loading-content">
-                                    <div class="spinner"></div>
-                                    <p>Chargement des événements...</p>
-                                </div>
-                            }
-                            else if (events.Count == 0)
-                            {
-                                <div class="empty-state">
-                                    <div class="empty-icon">
-                                        <i class="fas fa-calendar-alt"></i>
-                                    </div>
-                                    <h4>Aucun événement</h4>
-                                    <p>@alumni.FullName n'a pas encore organisé d'événements</p>
-                                </div>
-                            }
-                            else
-                            {
-                                <div class="events-grid">
-                                    @foreach (var ev in events)
+                                    else if (!string.IsNullOrWhiteSpace(exp.Duree))
                                     {
-                                        <div class="event-card enhanced">
-                                            <div class="event-date-badge">
-                                                <div class="date-day">@ev.Date.Day</div>
-                                                <div class="date-month">@ev.Date.ToString("MMM")</div>
-                                            </div>
-                                            <div class="event-content">
-                                                <h4 class="event-title">@ev.Title</h4>
-                                                <div class="event-meta">
-                                                    <div class="event-location">
-                                                        <i class="fas fa-map-marker-alt"></i>
-                                                        <span>@ev.Location</span>
-                                                    </div>
-                                                </div>
-                                                <p class="event-description">@ev.Description</p>
-                                            </div>
-                                        </div>
+                                        <span class="badge badge-secondary">@exp.Duree</span>
                                     }
-                                </div>
-                            }
-                        </section>
-
-                        <!-- Section Témoignages -->
-                        <section class="testimonials-section">
-                            <div class="section-header">
-                                <h3><i class="fas fa-star"></i> Témoignages</h3>
+                                </span>
                             </div>
-
-                            @if (temoignages == null)
+                            <div class="exp-card-dates">
+                                <i class="fas fa-calendar-alt"></i>
+                                <span>
+                                    @exp.DateDebut.ToString("MMM yyyy") -
+                                    @(exp.EnCours ? "Aujourd'hui" : (exp.DateFin.HasValue ? exp.DateFin.Value.ToString("MMM yyyy") : ""))
+                                </span>
+                            </div>
+                            <div class="exp-card-location">
+                                <i class="fas fa-map-marker-alt"></i> @exp.Localisation
+                            </div>
+                            @if (!string.IsNullOrWhiteSpace(exp.Description))
                             {
-                                <div class="loading-content">
-                                    <div class="spinner"></div>
-                                    <p>Chargement des témoignages...</p>
+                                <div class="exp-card-description">
+                                    @exp.Description
                                 </div>
                             }
-                            else if (temoignages.Count == 0)
-                            {
-                                <div class="empty-state">
-                                    <div class="empty-icon">
-                                        <i class="fas fa-star"></i>
-                                    </div>
-                                    <h4>Aucun témoignage</h4>
-                                    <p>@alumni.FullName n'a pas encore partagé de témoignages</p>
-                                </div>
-                            }
-                            else
-                            {
-                                <div class="testimonials-list">
-                                    @foreach (var temoignage in temoignages)
-                                    {
-                                        <div class="testimonial-card">
-                                            <div class="testimonial-content">
-                                                <div class="quote-mark">
-                                                    <i class="fas fa-quote-left"></i>
-                                                </div>
-                                                <p class="testimonial-text">@temoignage.Contenu</p>
-                                            </div>
-                                            <div class="testimonial-footer">
-                                                <div class="testimonial-date">
-                                                    <i class="fas fa-calendar"></i>
-                                                    @temoignage.Date.ToString("dd MMM yyyy")
-                                                </div>
-                                                @if (!string.IsNullOrEmpty(temoignage.MotsCles))
-                                                {
-                                                    <div class="testimonial-tags">
-                                                        @foreach (var tag in temoignage.MotsCles.Split(','))
-                                                        {
-                                                            <span class="tag">@tag.Trim()</span>
-                                                        }
-                                                    </div>
-                                                }
-                                            </div>
-                                        </div>
-                                    }
-                                </div>
-                            }
-                        </section>
-                    </div>
+                            <div class="exp-card-details">
+                                @if (!string.IsNullOrWhiteSpace(exp.TypeContrat))
+                                {
+                                    <span class="exp-card-contrat">Contrat : @exp.TypeContrat</span>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(exp.Secteur))
+                                {
+                                    <span class="exp-card-secteur">Secteur : @exp.Secteur</span>
+                                }
+                            </div>
+                        </div>
+                    }
                 </div>
             }
         </section>
-    </div>
+
+        <!-- Section Événements -->
+        <section class="events-section">
+            <div class="section-header">
+                <h3><i class="fas fa-calendar-alt"></i> Mes Événements</h3>
+            </div>
+
+            @if (events == null)
+            {
+                <div class="loading-content">
+                    <div class="spinner"></div>
+                    <p>Chargement des événements...</p>
+                </div>
+            }
+            else if (events.Count == 0)
+            {
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <h4>Aucun événement</h4>
+                    <p>Organisez ou participez à des événements pour développer votre réseau</p>
+                </div>
+            }
+            else
+            {
+                <div class="events-grid">
+                    @foreach (var ev in events)
+                    {
+                        <div class="event-card enhanced">
+                            <div class="event-date-badge">
+                                <div class="date-day">@ev.Date.Day</div>
+                                <div class="date-month">@ev.Date.ToString("MMM")</div>
+                            </div>
+                            <div class="event-content">
+                                <h4 class="event-title">@ev.Title</h4>
+                                <div class="event-meta">
+                                    <div class="event-location">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        <span>@ev.Location</span>
+                                    </div>
+                                </div>
+                                <p class="event-description">@ev.Description</p>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </section>
+
+        <!-- Section Témoignages -->
+        <section class="testimonials-section">
+            <div class="section-header">
+                <h3><i class="fas fa-star"></i> Mes Témoignages</h3>
+            </div>
+
+            @if (temoignages == null)
+            {
+                <div class="loading-content">
+                    <div class="spinner"></div>
+                    <p>Chargement des témoignages...</p>
+                </div>
+            }
+            else if (temoignages.Count == 0)
+            {
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <h4>Aucun témoignage</h4>
+                    <p>Partagez votre expérience pour inspirer d'autres alumni</p>
+                </div>
+            }
+            else
+            {
+                <div class="testimonials-list">
+                    @foreach (var temoignage in temoignages)
+                    {
+                        <div class="testimonial-card">
+                            <div class="testimonial-content">
+                                <div class="quote-mark">
+                                    <i class="fas fa-quote-left"></i>
+                                </div>
+                                <p class="testimonial-text">@temoignage.Contenu</p>
+                            </div>
+                            <div class="testimonial-footer">
+                                <div class="testimonial-date">
+                                    <i class="fas fa-calendar"></i>
+                                    @temoignage.Date.ToString("dd MMM yyyy")
+                                </div>
+                                @if (!string.IsNullOrEmpty(temoignage.MotsCles))
+                                {
+                                    <div class="testimonial-tags">
+                                        @foreach (var tag in temoignage.MotsCles.Split(','))
+                                        {
+                                            <span class="tag">@tag.Trim()</span>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </section>
+    </main>
 </div>
+
+
 
 <style>
     .experience-list-grid {
