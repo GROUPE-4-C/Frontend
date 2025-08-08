@@ -12,6 +12,8 @@ namespace AlumniConnect.Front.Services
         private readonly IJSRuntime _jsRuntime;
         private const string TokenKey = "authToken";
         private const string UserKey = "currentUser";
+        private UserInfo? _currentUser;
+        public UserInfo? CurrentUser => _currentUser;
 
         public AuthService(HttpClient httpClient, IJSRuntime jsRuntime)
         {
@@ -132,6 +134,7 @@ namespace AlumniConnect.Front.Services
                     {
                         await StoreAuthDataAsync(loginResponse.Token, loginResponse.User);
                         SetAuthorizationHeader(loginResponse.Token);
+                        _currentUser = loginResponse.User;
 
                         return new ApiResponse<LoginResponse>
                         {
@@ -251,6 +254,7 @@ namespace AlumniConnect.Front.Services
             await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", TokenKey);
             await _jsRuntime.InvokeVoidAsync("localStorage.removeItem", UserKey);
             _httpClient.DefaultRequestHeaders.Authorization = null;
+            _currentUser = null;
         }
 
         private async Task StoreAuthDataAsync(string token, UserInfo user)
@@ -288,6 +292,7 @@ namespace AlumniConnect.Front.Services
             if (!string.IsNullOrEmpty(token))
             {
                 SetAuthorizationHeader(token);
+                _currentUser = await GetCurrentUserAsync();
             }
         }
     }

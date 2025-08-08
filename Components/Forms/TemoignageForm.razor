@@ -56,7 +56,7 @@
                         else
                         {
                             <i class="fas fa-star"></i>
-                            <span>Publier le témoignage</span>
+                            <span>@SubmitText</span>
                         }
                     </button>
                     <button type="button" class="modal-btn-secondary" onclick="@($"closeModal('{ModalId}')")">
@@ -72,6 +72,7 @@
 @code {
     [Parameter] public string ModalId { get; set; } = "createTemoignageModal";
     [Parameter] public string Title { get; set; } = "Rédiger un témoignage";
+    [Parameter] public string SubmitText { get; set; } = "Publier le témoignage";
     [Parameter] public TemoignageModel TemoignageModel { get; set; } = new();
     [Parameter] public EventCallback<TemoignageModel> OnSubmit { get; set; }
     [Parameter] public bool IsSubmitting { get; set; }
@@ -82,7 +83,21 @@
 
     protected override void OnInitialized()
     {
-        localTemoignageModel = new TemoignageModel();
+        // Si c'est une modification, on copie les données du modèle existant
+        if (!string.IsNullOrEmpty(TemoignageModel.Id))
+        {
+            localTemoignageModel = new TemoignageModel
+            {
+                Id = TemoignageModel.Id,
+                Contenu = TemoignageModel.Contenu,
+                MotsCles = TemoignageModel.MotsCles,
+                UserId = TemoignageModel.UserId
+            };
+        }
+        else
+        {
+            localTemoignageModel = new TemoignageModel();
+        }
         hasSubmitted = false;
     }
 
@@ -108,11 +123,20 @@
             // Préparer les données pour l'API
             var temoignageData = new
             {
-                contenu = localTemoignageModel.Contenu
+                contenu = localTemoignageModel.Contenu,
+                motsCles = localTemoignageModel.MotsCles
             };
 
             // Faire l'appel API
-            var response = await Http.PostAsJsonAsync("http://localhost:5175/api/temoignages", temoignageData);
+            HttpResponseMessage response;
+            if (string.IsNullOrEmpty(localTemoignageModel.Id))
+            {
+                response = await Http.PostAsJsonAsync("http://localhost:5175/api/temoignages", temoignageData);
+            }
+            else
+            {
+                response = await Http.PutAsJsonAsync($"http://localhost:5175/api/temoignages/{localTemoignageModel.Id}", temoignageData);
+            }
 
             if (response.IsSuccessStatusCode)
             {

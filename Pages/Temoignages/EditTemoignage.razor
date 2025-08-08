@@ -1,0 +1,156 @@
+@page "/temoignages/edit/{Id}"
+@layout MainLayout
+@using AlumniConnect.Front.Components.Forms
+@using AlumniConnect.Front.Models
+@using AlumniConnect.Front.Services
+@using AlumniConnect.Front.Utils
+@inject HttpClient Http
+@inject AuthService AuthService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+
+<link href="/css/shared-navbar.css" rel="stylesheet" />
+<link href="/css/body-layout.css" rel="stylesheet" />
+<link href="/css/modal-forms.css" rel="stylesheet" />
+<link href="/css/temoignages.css" rel="stylesheet" />
+<link href="/css/edit-temoignage.css" rel="stylesheet" />
+
+<SharedNavbar ActivePage="temoignages" RequireLogin="true" />
+
+<div class="main-container">
+    <div class="edit-temoignage-container">
+        @if (loading)
+        {
+            <div class="loading-state">
+                <div class="loading-spinner"></div>
+                <p>Chargement du témoignage...</p>
+            </div>
+        }
+        else if (temoignage == null)
+        {
+            <div class="error-state">
+                <i class="fas fa-exclamation-circle"></i>
+                <h3>Témoignage non trouvé</h3>
+                <p>Le témoignage que vous cherchez n'existe pas ou a été supprimé.</p>
+                <button class="btn-primary" @onclick="@(() => NavigationManager.NavigateTo("/temoignages"))">
+                    Retour aux témoignages
+                </button>
+            </div>
+        }
+        else
+        {
+            <div class="edit-form">
+                <h2>Modifier le témoignage</h2>
+
+                <div class="form-group">
+                    <label for="contenu">Contenu du témoignage</label>
+                    <textarea id="contenu"
+                             class="form-control"
+                             rows="6"
+                             @bind="temoignage.Contenu"
+                             placeholder="Partagez votre expérience..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="motsCles">Mots-clés (séparés par des virgules)</label>
+                    <input type="text"
+                           id="motsCles"
+                           class="form-control"
+                           @bind="temoignage.MotsCles"
+                           placeholder="Ex: Stage, Alternance, Conseil" />
+                </div>
+
+                <div class="form-actions">
+                    <button class="btn-secondary" @onclick="@(() => NavigationManager.NavigateTo("/temoignages"))">
+                        Annuler
+                    </button>
+                    <button class="btn-primary" @onclick="SaveChanges" disabled="@isSaving">
+                        @if (isSaving)
+                        {
+                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            <span>Enregistrement...</span>
+                        }
+                        else
+                        {
+                            <span>Enregistrer les modifications</span>
+                        }
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+
+
+@code {
+    [Parameter]
+    public string Id { get; set; } = string.Empty;
+
+    private TemoignageModel? temoignage;
+    private bool loading = true;
+    private bool isSaving = false;
+    private UserInfo? currentUser;
+
+    protected override async Task OnInitializedAsync()
+    {
+        currentUser = await AuthService.GetCurrentUserAsync();
+        await LoadTemoignage();
+    }
+
+    private async Task LoadTemoignage()
+    {
+        try
+        {
+            temoignage = await Http.GetFromJsonAsync<TemoignageModel>($"http://localhost:5175/api/temoignages/{Id}");
+
+            // Vérifier si l'utilisateur est autorisé à modifier ce témoignage
+            if (temoignage != null && currentUser != null && temoignage.UserId != currentUser.Id)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Vous n'êtes pas autorisé à modifier ce témoignage.");
+                NavigationManager.NavigateTo("/temoignages");
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erreur lors du chargement du témoignage: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("alert", "Erreur lors du chargement du témoignage.");
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private async Task SaveChanges()
+    {
+        if (temoignage == null) return;
+
+        isSaving = true;
+        try
+        {
+            var response = await Http.PutAsJsonAsync($"http://localhost:5175/api/temoignages/{Id}", temoignage);
+
+            if (response.IsSuccessStatusCode)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Témoignage mis à jour avec succès!");
+                NavigationManager.NavigateTo("/temoignages");
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                await JSRuntime.InvokeVoidAsync("alert", $"Erreur lors de la mise à jour: {error}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erreur lors de la mise à jour du témoignage: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("alert", "Erreur lors de la mise à jour du témoignage.");
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+}

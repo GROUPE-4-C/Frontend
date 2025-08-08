@@ -1,0 +1,157 @@
+@using Microsoft.AspNetCore.Components.Forms
+@using AlumniConnect.Front.Models
+@using AlumniConnect.Front.Utils
+@using System.Net.Http.Headers
+@using System.Text.Json
+@inject HttpClient Http
+@inject AlumniConnect.Front.Services.AuthService AuthService
+@inject IJSRuntime JSRuntime
+
+<div class="create-modal-overlay" id="@ModalId">
+    <div class="create-modal">
+        <div class="create-modal-header">
+            <h3 class="create-modal-title">
+                <i class="fas fa-edit"></i>
+                Modifier le témoignage
+            </h3>
+            <button class="modal-close-btn" onclick="@($"closeModal('{ModalId}')")">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="create-modal-content">
+            <EditForm Model="@temoignage" OnValidSubmit="@HandleSubmit">
+                <DataAnnotationsValidator />
+
+                <div class="modal-form-group">
+                    <label class="modal-form-label">
+                        <i class="fas fa-edit"></i>
+                        Votre témoignage *
+                    </label>
+                    <InputTextArea @bind-Value="temoignage.Contenu"
+                                 class="modal-form-textarea"
+                                 rows="8"
+                                 style="min-height: 180px;"
+                                 placeholder="Modifiez votre témoignage ici..." />
+                    <ValidationMessage For="@(() => temoignage.Contenu)" />
+                </div>
+
+                <div class="modal-form-group">
+                    <label class="modal-form-label">
+                        <i class="fas fa-tags"></i>
+                        Mots-clés (séparés par des virgules)
+                    </label>
+                    <InputText @bind-Value="temoignage.MotsCles"
+                              class="modal-form-input"
+                              placeholder="Ex: Stage, Alternance, Conseil..." />
+                </div>
+
+                <div class="modal-form-actions">
+                    <button type="submit" class="modal-btn-primary" disabled="@isSubmitting">
+                        @if (isSubmitting)
+                        {
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <span>Enregistrement...</span>
+                        }
+                        else
+                        {
+                            <i class="fas fa-save"></i>
+                            <span>Enregistrer les modifications</span>
+                        }
+                    </button>
+                    <button type="button" class="modal-btn-secondary" onclick="@($"closeModal('{ModalId}')")">
+                        <i class="fas fa-times"></i>
+                        Annuler
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string ModalId { get; set; } = "editTemoignageModal";
+    [Parameter] public TemoignageModel TemoignageModel { get; set; } = new();
+    [Parameter] public EventCallback<TemoignageModel> OnSubmit { get; set; }
+    [Parameter] public bool IsSubmitting { get; set; }
+
+    private TemoignageModel temoignage = new();
+    private bool isSubmitting = false;
+
+    protected override void OnParametersSet()
+    {
+        // Copier les données du témoignage à modifier
+        temoignage = new TemoignageModel
+        {
+            Id = TemoignageModel.Id,
+            UserId = TemoignageModel.UserId,
+            Contenu = TemoignageModel.Contenu,
+            MotsCles = TemoignageModel.MotsCles,
+            Date = TemoignageModel.Date,
+            FullName = TemoignageModel.FullName,
+            Email = TemoignageModel.Email,
+            Profession = TemoignageModel.Profession,
+            PhotoUrl = TemoignageModel.PhotoUrl,
+            Promotion = TemoignageModel.Promotion
+        };
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (isSubmitting || string.IsNullOrWhiteSpace(temoignage.Contenu))
+            return;
+
+        isSubmitting = true;
+        StateHasChanged();
+
+        try
+        {
+            var token = await AuthService.GetTokenAsync();
+            if (string.IsNullOrEmpty(token))
+            {
+                throw new Exception("Vous devez être connecté pour modifier un témoignage.");
+            }
+
+            // Configurer le header d'autorisation
+            Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            // Préparer les données pour l'API
+            var temoignageData = new
+            {
+                contenu = temoignage.Contenu,
+                motsCles = temoignage.MotsCles
+            };
+
+            // Faire l'appel API avec PUT
+            var response = await Http.PutAsJsonAsync($"http://localhost:5175/api/temoignages/{temoignage.Id}", temoignageData);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var updatedTemoignage = await response.Content.ReadFromJsonAsync<TemoignageModel>();
+
+                // Fermer le modal
+                await JSRuntime.InvokeVoidAsync("closeModal", ModalId);
+
+                // Notifier le parent avec le témoignage modifié
+                if (OnSubmit.HasDelegate && updatedTemoignage != null)
+                {
+                    await OnSubmit.InvokeAsync(updatedTemoignage);
+                }
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                throw new Exception($"Erreur lors de la modification du témoignage: {errorContent}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erreur: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("alert", $"Erreur: {ex.Message}");
+        }
+        finally
+        {
+            isSubmitting = false;
+            StateHasChanged();
+        }
+    }
+}
