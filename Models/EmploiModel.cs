@@ -14,6 +14,8 @@ namespace AlumniConnect.Front.Models
         [StringLength(2000, ErrorMessage = "La description ne peut pas dépasser 2000 caractères")]
         public string Description { get; set; } = string.Empty;
 
+        public string? ImageBase64 { get; set; }
+
         [Required(ErrorMessage = "L'entreprise est obligatoire")]
         [StringLength(100, ErrorMessage = "Le nom de l'entreprise ne peut pas dépasser 100 caractères")]
         public string Entreprise { get; set; } = string.Empty;

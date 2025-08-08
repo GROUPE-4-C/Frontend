@@ -1,5 +1,10 @@
 @using Microsoft.AspNetCore.Components.Forms
 @using AlumniConnect.Front.Models
+@using AlumniConnect.Front.Utils
+@using System.Net.Http.Headers
+@inject HttpClient Http
+@inject AlumniConnect.Front.Services.AuthService AuthService
+@inject IJSRuntime JSRuntime
 
 <div class="create-modal-overlay" id="@ModalId">
     <div class="create-modal">
@@ -65,7 +70,7 @@
                         <i class="fas fa-align-left"></i>
                         Description du poste *
                     </label>
-                    <InputTextArea @bind-Value="EmploiModel.Description" class="modal-form-textarea" placeholder="Décrivez le poste, les responsabilités, les compétences requises..." />
+                    <InputTextArea @bind-Value="EmploiModel.Description" class="modal-form-textarea" rows="6" placeholder="Décrivez le poste, les responsabilités, les compétences requises..." />
                     <ValidationMessage For="@(() => EmploiModel.Description)" />
                 </div>
 
@@ -97,14 +102,6 @@
                     </div>
                 </div>
 
-                <div class="modal-form-group">
-                    <label class="modal-form-checkbox">
-                        <InputCheckbox @bind-Value="EmploiModel.EstActif" />
-                        <i class="fas fa-eye"></i>
-                        Offre active et visible
-                    </label>
-                </div>
-
                 <div class="modal-form-actions">
                     <button type="submit" class="modal-btn-primary" disabled="@IsSubmitting">
                         @if (IsSubmitting)
@@ -133,33 +130,80 @@
     [Parameter] public string Title { get; set; } = "Publier une offre d'emploi";
     [Parameter] public EmploiModel EmploiModel { get; set; } = new();
     [Parameter] public EventCallback<EmploiModel> OnSubmit { get; set; }
-    [Parameter] public bool IsSubmitting { get; set; } = false;
+    [Parameter] public bool IsSubmitting { get; set; }
 
     private string selectedImageName = string.Empty;
 
     private async Task HandleSubmit()
     {
-        if (OnSubmit.HasDelegate)
+        try
         {
-            await OnSubmit.InvokeAsync(EmploiModel);
+            var token = await AuthService.GetTokenAsync();
+            if (string.IsNullOrEmpty(token))
+            {
+                throw new Exception("Vous devez être connecté pour publier une offre d'emploi.");
+            }
+
+            Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var response = await Http.PostAsJsonAsync("http://localhost:5175/api/emplois", EmploiModel);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var createdEmploi = await response.Content.ReadFromJsonAsync<EmploiModel>();
+                if (OnSubmit.HasDelegate && createdEmploi != null)
+                {
+                    await OnSubmit.InvokeAsync(createdEmploi);
+                }
+
+                // Reset du formulaire
+                EmploiModel = new();
+                selectedImageName = string.Empty;
+
+                // Fermer le modal
+                await JSRuntime.InvokeVoidAsync("closeModal", ModalId);
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                throw new Exception($"Erreur lors de la création de l'offre: {errorContent}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erreur: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("alert", $"Erreur: {ex.Message}");
         }
     }
 
-    private void HandleImageSelection(InputFileChangeEventArgs e)
+    private async Task HandleImageSelection(InputFileChangeEventArgs e)
     {
         var file = e.File;
         if (file != null)
         {
-            selectedImageName = file.Name;
+            try
+            {
+                selectedImageName = file.Name;
 
-            // Ici vous pouvez traiter le fichier :
-            // - Validation de la taille
-            // - Upload vers votre serveur
-            // - Génération d'une URL
+                // Lire le fichier en bytes
+                using var stream = file.OpenReadStream(5 * 1024 * 1024); // Max 5MB
+                using var memoryStream = new MemoryStream();
+                await stream.CopyToAsync(memoryStream);
+                var imageBytes = memoryStream.ToArray();
 
-            // Pour l'instant, on simule juste le nom
-            EmploiModel.ImageUrl = $"/uploads/{file.Name}";
-            StateHasChanged();
+                // Convertir en Base64
+                var base64Image = Convert.ToBase64String(imageBytes);
+                EmploiModel.ImageBase64 = $"data:{file.ContentType};base64,{base64Image}";
+
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Erreur lors du traitement de l'image: {ex.Message}");
+                await JSRuntime.InvokeVoidAsync("alert", $"Erreur lors du traitement de l'image: {ex.Message}");
+                selectedImageName = string.Empty;
+                EmploiModel.ImageBase64 = null;
+            }
         }
     }
 }

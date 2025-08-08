@@ -8,7 +8,6 @@
 @inject AuthService AuthService
 @inject IJSRuntime JSRuntime
 
-
 <link href="css/shared-navbar.css" rel="stylesheet" />
 <link href="css/body-layout.css" rel="stylesheet" />
 <link href="css/dashboard.css" rel="stylesheet" />
@@ -66,7 +65,7 @@
             </div>
         </div>
 
-        <!-- Testimonials Feed identique à Dashboard -->
+        <!-- Testimonials Feed -->
         @if (temoignages == null)
         {
             <div class="loading-state">
@@ -143,7 +142,7 @@
     {
         try
         {
-            temoignages = await Http.GetFromJsonAsync<List<TemoignageModel>>("/api/temoignages");
+            temoignages = await Http.GetFromJsonAsync<List<TemoignageModel>>("http://localhost:5175/api/temoignages");
         }
         catch (Exception ex)
         {
@@ -152,10 +151,10 @@
         }
     }
 
-private async Task HandleTemoignageSubmit(TemoignageModel model)
-{
-    if (model != null && !string.IsNullOrWhiteSpace(model.Contenu))
+    private async Task HandleTemoignageSubmit(TemoignageModel model)
     {
+        if (model == null) return;
+
         try
         {
             // Ajouter le nouveau témoignage à la liste
@@ -165,16 +164,20 @@ private async Task HandleTemoignageSubmit(TemoignageModel model)
             }
             temoignages.Insert(0, model);
             StateHasChanged();
+
+            // Rafraîchir la liste complète des témoignages
+            var updatedTemoignages = await Http.GetFromJsonAsync<List<TemoignageModel>>("http://localhost:5175/api/temoignages");
+            if (updatedTemoignages != null)
+            {
+                temoignages = updatedTemoignages;
+                StateHasChanged();
+            }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erreur lors de l'ajout du témoignage: {ex.Message}");
+            Console.WriteLine($"Erreur lors du rafraîchissement des témoignages: {ex.Message}");
         }
     }
-}
-
-
-
 
     private string FormatDate(DateTime date)
     {

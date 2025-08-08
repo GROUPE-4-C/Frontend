@@ -2,502 +2,21 @@
 @layout MainLayout
 @using AlumniConnect.Front.Components.Forms
 @using AlumniConnect.Front.Models
-@using System.Text.Json
+@using AlumniConnect.Front.Utils
 @inject HttpClient Http
 
 <link href="css/shared-navbar.css" rel="stylesheet" />
 <link href="css/body-layout.css" rel="stylesheet" />
 <link href="css/dashboard.css" rel="stylesheet" />
+<link href="css/dashboard-responsive.css" rel="stylesheet" />
 <link href="css/modal-forms.css" rel="stylesheet" />
-
-<style>
-    /* Layout principal */
-    .main-container {
-        display: flex;
-        gap: 2rem;
-        padding: 2rem;
-        position: relative;
-        min-height: calc(100vh - 64px);
-        margin: 0 auto;
-        margin-top: 63px;
-        max-width: 1200px;
-    }
-
-    /* Sidebar */
-    .welcome-card {
-        position: sticky;
-        top: 2rem;
-        height: fit-content;
-        min-width: 280px;
-        max-width: 280px;
-        background: white;
-        padding: 1.5rem;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        align-self: flex-start;
-        z-index: 10;
-        border: 1px solid #e2e8f0;
-    }
-
-    .welcome-card h3 {
-        margin: 0 0 1rem 0;
-        font-size: 1.25rem;
-        font-weight: 600;
-        color: #2d3748;
-    }
-
-    .welcome-card p {
-        margin: 0 0 1.5rem 0;
-        color: #718096;
-        line-height: 1.5;
-        font-size: 0.9rem;
-    }
-
-    /* Main feed */
-    .main-feed {
-        flex: 1;
-        min-width: 0;
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
-    }
-
-    /* Barre de filtres */
-    .filter-section {
-        background: white;
-        padding: 1.5rem;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        border: 1px solid #e2e8f0;
-    }
-
-    .search-input {
-        width: 100%;
-        padding: 0.75rem 1rem;
-        border: 2px solid #e2e8f0;
-        border-radius: 8px;
-        font-size: 1rem;
-        margin-bottom: 1rem;
-        transition: border-color 0.2s;
-    }
-
-    .search-input:focus {
-        outline: none;
-        border-color: #48bb78;
-    }
-
-    .filter-actions {
-        display: flex;
-        gap: 0.5rem;
-        flex-wrap: wrap;
-    }
-
-    .filter-button {
-        padding: 0.5rem 1rem;
-        background: #f7fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 20px;
-        font-size: 0.875rem;
-        cursor: pointer;
-        transition: all 0.2s;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        color: #4a5568;
-    }
-
-    .filter-button:hover {
-        background: #48bb78;
-        color: white;
-        border-color: #48bb78;
-    }
-
-    .filter-button i {
-        font-size: 0.8rem;
-    }
-
-    /* États de chargement */
-    .loading-state, .empty-state, .error-state {
-        text-align: center;
-        padding: 3rem 2rem;
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        border: 1px solid #e2e8f0;
-    }
-
-    .loading-spinner {
-        width: 40px;
-        height: 40px;
-        border: 4px solid #f3f4f6;
-        border-top: 4px solid #48bb78;
-        border-radius: 50%;
-        margin: 0 auto 16px;
-        animation: spin 1s linear infinite;
-    }
-
-    .error-state {
-        color: #e53e3e;
-        border-color: #feb2b2;
-        background: #fef5f5;
-    }
-
-    .error-icon {
-        font-size: 2rem;
-        margin-bottom: 1rem;
-    }
-
-    .retry-button {
-        margin-top: 1rem;
-        padding: 0.75rem 1.5rem;
-        background-color: #48bb78;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        font-size: 0.9rem;
-        font-weight: 500;
-        transition: background-color 0.2s;
-    }
-
-    .retry-button:hover {
-        background-color: #38a169;
-    }
-
-    .empty-state i {
-        font-size: 3rem;
-        color: #cbd5e0;
-        margin-bottom: 1rem;
-    }
-
-    .empty-state h3 {
-        color: #4a5568;
-        margin-bottom: 0.5rem;
-    }
-
-    .empty-state p {
-        color: #718096;
-    }
-
-    /* Cards d'emploi */
-    .job-card {
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        border: 1px solid #e2e8f0;
-        transition: all 0.2s;
-        overflow: hidden;
-    }
-
-    .job-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-
-    .job-header {
-        padding: 1.5rem;
-        border-bottom: 1px solid #e2e8f0;
-        background: #f8fafc;
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-    }
-
-    .company-logo {
-        width: 60px;
-        height: 60px;
-        border-radius: 12px;
-        overflow: hidden;
-        background: #e2e8f0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-
-    .company-logo img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-
-    .job-header-info {
-        flex: 1;
-    }
-
-    .company-name {
-        font-size: 1.1rem;
-        font-weight: 600;
-        color: #2d3748;
-        margin-bottom: 0.25rem;
-    }
-
-    .job-location {
-        color: #718096;
-        font-size: 0.9rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        margin-bottom: 0.25rem;
-    }
-
-    .job-date {
-        color: #718096;
-        font-size: 0.85rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .job-content {
-        padding: 1.5rem;
-    }
-
-    .job-badge {
-        display: inline-block;
-        background: linear-gradient(135deg, #48bb78, #38a169);
-        color: white;
-        padding: 0.375rem 0.75rem;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        font-weight: 500;
-        margin-bottom: 1rem;
-    }
-
-    .job-badge i {
-        margin-right: 0.5rem;
-    }
-
-    .job-title {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #2d3748;
-        margin-bottom: 1rem;
-        line-height: 1.3;
-    }
-
-    .job-description {
-        color: #4a5568;
-        line-height: 1.6;
-        margin-bottom: 1.5rem;
-        white-space: pre-line;
-    }
-
-    .job-details-section {
-        background: #f8fafc;
-        padding: 1rem;
-        border-radius: 8px;
-        margin-bottom: 1.5rem;
-        border-left: 4px solid #48bb78;
-    }
-
-    .job-detail-item {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        color: #4a5568;
-        font-size: 0.95rem;
-        margin-bottom: 0.5rem;
-    }
-
-    .job-detail-item:last-child {
-        margin-bottom: 0;
-    }
-
-    .job-detail-item i {
-        color: #48bb78;
-        width: 20px;
-        text-align: center;
-    }
-
-    .job-tags {
-        display: flex;
-        gap: 0.5rem;
-        flex-wrap: wrap;
-        margin-bottom: 1.5rem;
-    }
-
-    .job-tag {
-        background: #e2e8f0;
-        color: #4a5568;
-        padding: 0.25rem 0.75rem;
-        border-radius: 12px;
-        font-size: 0.8rem;
-        font-weight: 500;
-    }
-
-    /* Section créateur */
-    .creator-section {
-        border-top: 1px solid #e2e8f0;
-        padding: 1rem 1.5rem;
-        background: #fafbfc;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-
-    .creator-info {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-    }
-
-    .creator-avatar {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        overflow: hidden;
-        background: #e2e8f0;
-    }
-
-    .creator-avatar img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-
-    .creator-name {
-        font-weight: 600;
-        color: #2d3748;
-        font-size: 0.9rem;
-    }
-
-    .creator-email {
-        font-size: 0.8rem;
-        color: #718096;
-    }
-
-    /* Actions et statistiques */
-    .job-stats {
-        font-size: 0.8rem;
-        color: #718096;
-    }
-
-    .job-actions {
-        border-top: 1px solid #e2e8f0;
-        padding: 1rem 1.5rem;
-        display: flex;
-        gap: 1rem;
-    }
-
-    .job-action {
-        flex: 1;
-        padding: 0.75rem;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        background: white;
-        color: #4a5568;
-        font-size: 0.9rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.2s;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        text-align: center;
-    }
-
-    .job-action:hover {
-        background: #48bb78;
-        color: white;
-        border-color: #48bb78;
-    }
-
-    .job-action.primary {
-        background: #48bb78;
-        color: white;
-        border-color: #48bb78;
-    }
-
-    .job-action.primary:hover {
-        background: #38a169;
-    }
-
-    /* Boutons */
-    .publish-button {
-        width: 100%;
-        padding: 0.75rem 1rem;
-        background: linear-gradient(135deg, #48bb78, #38a169);
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-size: 0.9rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: transform 0.2s;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-    }
-
-    .publish-button:hover {
-        transform: translateY(-1px);
-        background: linear-gradient(135deg, #38a169, #2f855a);
-    }
-
-    /* Animation de rotation */
-    @@keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-
-    /* Scrollbar personnalisée */
-    ::-webkit-scrollbar {
-        width: 8px;
-    }
-
-    ::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 4px;
-    }
-
-    ::-webkit-scrollbar-thumb {
-        background: #48bb78;
-        border-radius: 4px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-        background: #38a169;
-    }
-
-    /* Responsive */
-    @@media (max-width: 768px) {
-        .main-container {
-            flex-direction: column;
-            gap: 1rem;
-            padding: 1rem;
-        }
-
-        .welcome-card {
-            position: static;
-            min-width: auto;
-            max-width: none;
-        }
-
-        .filter-actions {
-            justify-content: center;
-        }
-
-        .job-actions {
-            flex-direction: column;
-        }
-
-        .job-header {
-            flex-direction: column;
-            text-align: center;
-        }
-    }
-</style>
-
 <script src="js/modals.js"></script>
 
 <!-- Composant Emploi Form -->
 <EmploiForm ModalId="createEmploiModal"
-           EmploiModel="@emploiModel"
-           OnSubmit="@HandleEmploiSubmit"
-           IsSubmitting="@isSubmitting" />
+            EmploiModel="@emploiModel"
+            OnSubmit="@HandleEmploiSubmit"
+            IsSubmitting="@isSubmitting" />
 
 <!-- Navbar partagée -->
 <SharedNavbar ActivePage="emplois" RequireLogin="false" />
@@ -505,61 +24,49 @@
 <!-- Main Container -->
 <div class="main-container">
     <!-- Sidebar Left -->
-    <aside class="welcome-card">
-        <h3>💼 Opportunités Emploi</h3>
-        <p>Découvrez les dernières offres d'emploi partagées par notre communauté d'alumni.</p>
-        <button class="publish-button" onclick="openModal('createEmploiModal')">
+    <aside class="welcome-card static-sidebar" style="min-width: 300px; max-width: 300px;">
+        <h3>💼 Offres d'emploi Alumni</h3>
+        <p>Découvrez les opportunités professionnelles partagées par notre communauté d'alumni.</p>
+        <button class="login-cta" onclick="openModal('createEmploiModal')">
             <i class="fas fa-plus"></i>
             Publier une offre
         </button>
     </aside>
 
     <!-- Main Feed -->
-    <main class="main-feed">
-        <!-- Filter Section -->
-        <div class="filter-section">
-            <input type="text"
-                   class="search-input"
-                   placeholder="Rechercher par titre, entreprise, localisation...">
-
-            <div class="filter-actions">
-                <button class="filter-button">
-                    <i class="fas fa-map-marker-alt"></i>
-                    Par lieu
-                </button>
-                <button class="filter-button">
-                    <i class="fas fa-clock"></i>
-                    Plus récentes
-                </button>
-                <button class="filter-button">
+    <main class="main-feed scrollable-feed">
+        <!-- Filter Bar -->
+        <div class="post-composer">
+            <div class="composer-input">
+                <div class="composer-avatar">💼</div>
+                <input type="text" placeholder="Filtrer par poste, entreprise, lieu...">
+            </div>
+            <div class="composer-actions">
+                <div class="composer-action">
                     <i class="fas fa-building"></i>
                     Par entreprise
-                </button>
-                <button class="filter-button">
+                </div>
+                <div class="composer-action">
+                    <i class="fas fa-map-marker-alt"></i>
+                    Par lieu
+                </div>
+                <div class="composer-action">
+                    <i class="fas fa-clock"></i>
+                    Plus récentes
+                </div>
+                <div class="composer-action">
                     <i class="fas fa-tags"></i>
                     Catégories
-                </button>
+                </div>
             </div>
         </div>
 
-        @if (isLoading)
+        <!-- Emploi Posts -->
+        @if (emplois == null)
         {
             <div class="loading-state">
                 <div class="loading-spinner"></div>
-                <h3>Chargement des offres d'emploi...</h3>
-                <p>Veuillez patienter</p>
-            </div>
-        }
-        else if (errorMessage != null)
-        {
-            <div class="error-state">
-                <div class="error-icon">⚠️</div>
-                <h3>Erreur de chargement</h3>
-                <p>@errorMessage</p>
-                <button class="retry-button" @onclick="LoadData">
-                    <i class="fas fa-redo"></i>
-                    Réessayer
-                </button>
+                <p>Chargement des offres d'emploi...</p>
             </div>
         }
         else if (!emplois.Any())
@@ -567,105 +74,116 @@
             <div class="empty-state">
                 <i class="fas fa-briefcase"></i>
                 <h3>Aucune offre d'emploi</h3>
-                <p>Soyez le premier à publier une offre d'emploi !</p>
+                <p>Les offres d'emploi apparaîtront ici.</p>
             </div>
         }
         else
         {
-            <!-- Job Cards -->
-            @foreach (var emploi in emplois)
+            @foreach (var emploi in emplois.OrderByDescending(e => e.DateDebut))
             {
-                <article class="job-card">
-                    <!-- Job Header -->
-                    <div class="job-header">
-                        <div class="company-logo">
-                            <img src="@(string.IsNullOrEmpty(emploi.ImageUrl) ? "/images/company-default.png" : emploi.ImageUrl)"
-                                 alt="Logo @emploi.Entreprise"
-                                 onerror="this.onerror=null; this.src='/images/company-default.png';" />
-                        </div>
-                        <div class="job-header-info">
-                            <div class="company-name">@emploi.Entreprise</div>
-                            <div class="job-location">
-                                <i class="fas fa-map-marker-alt"></i>
-                                <span>@emploi.Localisation</span>
-                            </div>
-                            <div class="job-date">
-                                <i class="fas fa-clock"></i>
-                                <span>Publié le @emploi.DateDebut.ToString("dd MMM yyyy")</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Job Content -->
-                    <div class="job-content">
-                        <div class="job-badge">
+                <article class="post emploi-card">
+                    <!-- En-tête de l'offre -->
+                    <div class="post-header">
+                        <div class="post-avatar emploi-avatar">
                             <i class="fas fa-briefcase"></i>
-                            Offre d'Emploi
                         </div>
-
-                        <h2 class="job-title">@emploi.Titre</h2>
-
-                        <div class="job-description">@emploi.Description</div>
-
-                        <div class="job-details-section">
-                            <div class="job-detail-item">
-                                <i class="fas fa-building"></i>
-                                <strong>Entreprise :</strong> @emploi.Entreprise
+                        <div class="post-author-info">
+                            <div class="post-author-name">@emploi.Titre</div>
+                            <div class="post-author-title">
+                                <strong>@emploi.Entreprise</strong>
                             </div>
-                            <div class="job-detail-item">
-                                <i class="fas fa-map-marker-alt"></i>
-                                <strong>Lieu :</strong> @emploi.Localisation
+                            <div class="post-time">
+                                <i class="fas fa-clock"></i>
+                                <span>Publié le @emploi.DateDebut.ToString("dd MMMM yyyy")</span>
                             </div>
-                            <div class="job-detail-item">
-                                <i class="fas fa-calendar"></i>
-                                <strong>Période :</strong> Du @emploi.DateDebut.ToString("dd/MM/yyyy") au @emploi.DateFin.ToString("dd/MM/yyyy")
-                            </div>
-                        </div>
-
-                        <div class="job-tags">
-                            <span class="job-tag">#Emploi</span>
-                            <span class="job-tag">#@(emploi?.Entreprise?.Replace(" ", "") ?? "Entreprise")</span>
-                            <span class="job-tag">#@(emploi?.Localisation?.Split(',').FirstOrDefault()?.Trim() ?? "Location")</span>
                         </div>
                     </div>
 
-                    <!-- Creator Section -->
-                    @if (!string.IsNullOrEmpty(emploi?.CreatorName))
-                    {
-                        <div class="creator-section">
-                            <div class="creator-info">
-                                <div class="creator-avatar">
-                                    <img src="images/default-avatar.png" alt="Avatar" />
-                                </div>
+                    <!-- Contenu de l'offre -->
+                    <div class="post-content">
+                        <!-- Badge emploi -->
+                        <div class="testimonial-badge emploi-badge">
+                            <i class="fas fa-briefcase"></i>
+                            Offre d'emploi
+                        </div>
+
+                        <!-- Titre principal -->
+                        <h3 class="emploi-title">@emploi.Titre</h3>
+
+                        <!-- Image de l'offre si disponible -->
+                        @if (!string.IsNullOrEmpty(emploi.ImageUrl))
+                        {
+                            <div class="emploi-image-container">
+                                <img src="http://localhost:5175@(emploi.ImageUrl)"
+                                     alt="Image de l'offre @emploi.Titre"
+                                     class="emploi-image" />
+                            </div>
+                        }
+
+                        <!-- Informations principales de l'offre -->
+                        <div class="emploi-info-grid">
+                            <div class="emploi-info-item">
+                                <i class="fas fa-building"></i>
                                 <div>
-                                    <div class="creator-name">@(emploi.CreatorName ?? "Anonyme")</div>
+                                    <strong>Entreprise</strong>
+                                    <span>@emploi.Entreprise</span>
+                                </div>
+                            </div>
+                            <div class="emploi-info-item">
+                                <i class="@(emploi.EstActif ? "fas fa-check-circle text-success" : "fas fa-times-circle text-danger")"></i>
+                                <div>
+                                    <strong>Statut</strong>
+                                    <span class="@(emploi.EstActif ? "text-success" : "text-danger")">
+                                        @(emploi.EstActif ? "Active" : "Inactive")
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="emploi-info-item">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <div>
+                                    <strong>Localisation</strong>
+                                    <span>@emploi.Localisation</span>
+                                </div>
+                            </div>
+
+                            <div class="emploi-info-item">
+                                <i class="fas fa-calendar-alt"></i>
+                                <div>
+                                    <strong>Période</strong>
+                                    <span>Du @emploi.DateDebut.ToString("dd/MM/yyyy")</span>
+                                    <span>au @emploi.DateFin.ToString("dd/MM/yyyy")</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Description de l'offre -->
+                        <div class="emploi-description">
+                            <h4><i class="fas fa-info-circle"></i> Description du poste</h4>
+                            <p>@emploi.Description</p>
+                        </div>
+
+                        <!-- Informations du créateur -->
+                        @if (!string.IsNullOrEmpty(emploi.CreatorName))
+                        {
+                            <div class="emploi-creator-info">
+                                <small>
+                                    <i class="fas fa-user"></i>
+                                    Publié par <strong>@emploi.CreatorName</strong>
                                     @if (!string.IsNullOrEmpty(emploi.CreatorEmail))
                                     {
-                                        <div class="creator-email">@emploi.CreatorEmail</div>
+                                        <span>(<a href="mailto:@emploi.CreatorEmail" class="creator-email">@emploi.CreatorEmail</a>)</span>
                                     }
-                                </div>
+                                </small>
                             </div>
-                            <div class="job-stats">
-                                <div>👁️ @Random.Shared.Next(20, 100) vues</div>
-                                <div>📊 @Random.Shared.Next(5, 25) candidatures</div>
-                            </div>
-                        </div>
-                    }
+                        }
 
-                    <!-- Job Actions -->
-                    <div class="job-actions">
-                        <button class="job-action primary">
-                            <i class="fas fa-paper-plane"></i>
-                            Postuler
-                        </button>
-                        <button class="job-action">
-                            <i class="fas fa-bookmark"></i>
-                            Sauvegarder
-                        </button>
-                        <button class="job-action">
-                            <i class="fas fa-share"></i>
-                            Partager
-                        </button>
+                        <!-- Tags de l'offre -->
+                        <div class="emploi-tags">
+                            <span class="emploi-tag">#EmploiAlumni</span>
+                            <span class="emploi-tag">#@emploi.Entreprise.Replace(" ", "")</span>
+                            <span class="emploi-tag">#@emploi.Localisation.Replace(" ", "").Replace(",", "")</span>
+                        </div>
                     </div>
                 </article>
             }
@@ -673,91 +191,220 @@
     </main>
 </div>
 
+<style>
+    /* Styles spécifiques pour les offres d'emploi */
+    .emploi-card {
+        border-left: 4px solid #3182ce;
+        margin-bottom: 24px;
+    }
+
+    .emploi-avatar {
+        background: linear-gradient(135deg, #3182ce, #2c5282);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+    }
+
+    .emploi-badge {
+        background: linear-gradient(135deg, #3182ce, #2c5282);
+        margin-bottom: 16px;
+    }
+
+    .emploi-title {
+        color: #2d3748;
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 20px;
+        line-height: 1.3;
+    }
+
+    .emploi-image-container {
+        margin: 20px 0;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .emploi-image {
+        width: 100%;
+        height: 250px;
+        object-fit: cover;
+        border-radius: 12px;
+        display: block;
+    }
+
+    .emploi-info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 16px;
+        margin: 20px 0;
+        padding: 20px;
+        background: #f8fafc;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .emploi-info-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .emploi-info-item i {
+        color: #3182ce;
+        font-size: 18px;
+        margin-top: 2px;
+        min-width: 20px;
+    }
+
+    .emploi-info-item div {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .emploi-info-item strong {
+        color: #2d3748;
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .emploi-info-item span {
+        color: #4a5568;
+        font-size: 14px;
+    }
+
+    .emploi-description {
+        margin: 20px 0;
+        padding: 20px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-left: 4px solid #3182ce;
+        border-radius: 8px;
+    }
+
+    .emploi-description h4 {
+        color: #2d3748;
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .emploi-description h4 i {
+        color: #3182ce;
+    }
+
+    .emploi-description p {
+        color: #4a5568;
+        line-height: 1.6;
+        margin-bottom: 8px;
+        white-space: pre-line;
+    }
+
+    .emploi-creator-info {
+        margin: 16px 0;
+        padding: 12px;
+        background: #f7fafc;
+        border-radius: 6px;
+        border-left: 3px solid #cbd5e0;
+    }
+
+    .creator-email {
+        color: #3182ce;
+        text-decoration: none;
+    }
+
+    .creator-email:hover {
+        text-decoration: underline;
+    }
+
+    .emploi-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 16px 0;
+    }
+
+    .emploi-tag {
+        background: #ebf8ff;
+        color: #2c5282;
+        padding: 6px 12px;
+        border-radius: 16px;
+        font-size: 12px;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    /* Responsive design */
+    @@media (max-width: 768px) {
+        .emploi-info-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .emploi-image {
+            height: 200px;
+        }
+    }
+
+    .text-success {
+        color: #48bb78 !important;
+    }
+
+    .text-danger {
+        color: #f56565 !important;
+    }
+</style>
+
 @code {
     private EmploiModel emploiModel = new();
     private bool isSubmitting = false;
-    private bool isLoading = true;
-    private List<EmploiModel> emplois = new();
-    private string? errorMessage;
+    private List<EmploiModel>? emplois;
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadData();
-    }
-
-    private async Task LoadData()
-    {
         try
         {
-            isLoading = true;
-            errorMessage = null;
-            StateHasChanged();
-
-            var response = await Http.GetAsync("/api/emplois");
-            var content = await response.Content.ReadAsStringAsync();
-
-            if (response.IsSuccessStatusCode)
+            emplois = await Http.GetFromJsonAsync<List<EmploiModel>>("http://localhost:5175/api/emplois");
+            if (emplois != null)
             {
-                var options = new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true,
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                };
-
-                var deserializedEmplois = JsonSerializer.Deserialize<List<EmploiModel>>(content, options);
-
-                if (deserializedEmplois != null && deserializedEmplois.Any())
-                {
-                    emplois = deserializedEmplois;
-                    Console.WriteLine($"Chargement réussi : {emplois.Count} emplois trouvés");
-                }
-                else
-                {
-                    emplois = new List<EmploiModel>();
-                    Console.WriteLine("Aucun emploi trouvé dans la réponse");
-                }
-            }
-            else
-            {
-                errorMessage = $"Erreur serveur : {response.StatusCode}";
-                Console.WriteLine($"Erreur API : {response.StatusCode} - {content}");
-                emplois = new List<EmploiModel>();
+                // Trier par date de début décroissante (plus récent en premier)
+                emplois = emplois.OrderByDescending(e => e.DateDebut).ToList();
             }
         }
         catch (Exception ex)
         {
-            errorMessage = "Erreur lors du chargement des données";
-            Console.WriteLine($"Exception : {ex.Message}");
-            Console.WriteLine($"StackTrace : {ex.StackTrace}");
+            Console.WriteLine($"Erreur lors du chargement des offres d'emploi: {ex.Message}");
             emplois = new List<EmploiModel>();
-        }
-        finally
-        {
-            isLoading = false;
-            StateHasChanged();
         }
     }
 
     private async Task HandleEmploiSubmit(EmploiModel model)
     {
-        isSubmitting = true;
-        StateHasChanged();
-
         try
         {
-            // Ici vous appellerez votre API
-            await Task.Delay(2000); // Simulation
-
+            // Ajouter la nouvelle offre au début de la liste
+            if (emplois == null)
+            {
+                emplois = new List<EmploiModel>();
+            }
             emplois.Insert(0, model);
-            emploiModel = new(); // Reset du formulaire
-
-            // Simuler la fermeture du modal via JavaScript
-            await Task.Delay(100);
-        }
-        finally
-        {
-            isSubmitting = false;
             StateHasChanged();
+
+            // Rafraîchir la liste complète
+            var updatedEmplois = await Http.GetFromJsonAsync<List<EmploiModel>>("http://localhost:5175/api/emplois");
+            if (updatedEmplois != null)
+            {
+                emplois = updatedEmplois.OrderByDescending(e => e.DateDebut).ToList();
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erreur lors du rafraîchissement des offres: {ex.Message}");
         }
     }
 }
