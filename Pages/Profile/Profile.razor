@@ -1,5 +1,6 @@
 @page "/profile"
 @using AlumniConnect.Front.Models
+@using AlumniConnect.Front.Components.Experience
 @inject AlumniConnect.Front.Services.AuthService AuthService
 @inject HttpClient Http
 @inject IJSRuntime JS
@@ -9,6 +10,8 @@
 <link href="css/shared-navbar.css" rel="stylesheet" />
 <link href="css/body-layout.css" rel="stylesheet" />
 <link href="css/dashboard.css" rel="stylesheet" />
+<link href="css/modal-forms.css" rel="stylesheet" />
+<script src="js/modals.js"></script>
 
 <div class="main-container">
     <aside class="profile-card">
@@ -95,10 +98,17 @@
 
     <main class="profile-feed">
         <!-- Section Parcours Professionnel -->
+        <!-- Formulaire modal pour ajouter une expérience -->
+        @using AlumniConnect.Front.Components.Forms
+        <ExperienceForm ModalId="createExperienceModal"
+                        ExperienceModel="@newExperience"
+                        OnSubmit="@OnExperienceAdded"
+                        IsSubmitting="@isSubmittingExperience" />
+
         <section class="career-timeline">
             <div class="section-header">
                 <h3><i class="fas fa-briefcase"></i> Parcours Professionnel</h3>
-                <button class="add-btn">
+                <button class="add-btn" onclick="openModal('createExperienceModal')">
                     <i class="fas fa-plus"></i>
                     Ajouter
                 </button>
@@ -127,55 +137,10 @@
             }
             else
             {
-                <div class="experience-list-grid">
-                    @foreach (var exp in Experiences.OrderByDescending(e => e.DateDebut))
-                    {
-                        <div class="experience-card">
-                            <div class="exp-card-header">
-                                <div class="exp-card-title">
-                                    <strong>@exp.Poste</strong>
-                                    <span class="exp-card-company">@exp.Entreprise</span>
-                                </div>
-                                <span class="exp-card-status">
-                                    @if (exp.EnCours)
-                                    {
-                                        <span class="badge badge-success">En cours</span>
-                                    }
-                                    else if (!string.IsNullOrWhiteSpace(exp.Duree))
-                                    {
-                                        <span class="badge badge-secondary">@exp.Duree</span>
-                                    }
-                                </span>
-                            </div>
-                            <div class="exp-card-dates">
-                                <i class="fas fa-calendar-alt"></i>
-                                <span>
-                                    @exp.DateDebut.ToString("MMM yyyy") -
-                                    @(exp.EnCours ? "Aujourd'hui" : (exp.DateFin.HasValue ? exp.DateFin.Value.ToString("MMM yyyy") : ""))
-                                </span>
-                            </div>
-                            <div class="exp-card-location">
-                                <i class="fas fa-map-marker-alt"></i> @exp.Localisation
-                            </div>
-                            @if (!string.IsNullOrWhiteSpace(exp.Description))
-                            {
-                                <div class="exp-card-description">
-                                    @exp.Description
-                                </div>
-                            }
-                            <div class="exp-card-details">
-                                @if (!string.IsNullOrWhiteSpace(exp.TypeContrat))
-                                {
-                                    <span class="exp-card-contrat">Contrat : @exp.TypeContrat</span>
-                                }
-                                @if (!string.IsNullOrWhiteSpace(exp.Secteur))
-                                {
-                                    <span class="exp-card-secteur">Secteur : @exp.Secteur</span>
-                                }
-                            </div>
-                        </div>
-                    }
-                </div>
+                <ExperienceList
+                    Experiences="@Experiences"
+                    IsOwner="@(isCurrentUserProfile)"
+                    OnExperienceUpdated="@HandleExperienceUpdated" />
             }
         </section>
         <style>
@@ -377,6 +342,52 @@
     List<TemoignageModel>? Temoignages;
     List<ExperienceModel>? Experiences;
 
+    // Pour le formulaire d'ajout d'expérience
+    ExperienceModel newExperience = new ExperienceModel
+    {
+        DateDebut = DateTime.Today,
+        DateFin = DateTime.Today,
+        EnCours = false
+    };
+    bool isSubmittingExperience = false;
+
+    // Réinitialise le modèle à chaque ouverture du modal (UX parfaite)
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+            return;
+        var modal = JS.InvokeAsync<bool>("eval", "document.getElementById('createExperienceModal')?.style.display === 'flex'");
+        modal.AsTask().ContinueWith(task =>
+        {
+            if (task.Result)
+            {
+                newExperience = new ExperienceModel
+                {
+                    DateDebut = DateTime.Today,
+                    DateFin = DateTime.Today,
+                    EnCours = false
+                };
+                StateHasChanged();
+            }
+        });
+    }
+
+    private async Task OnExperienceAdded(ExperienceModel exp)
+    {
+        isSubmittingExperience = true;
+        try
+        {
+            if (Experiences == null)
+                Experiences = new List<ExperienceModel>();
+            Experiences.Insert(0, exp);
+            StateHasChanged();
+        }
+        finally
+        {
+            isSubmittingExperience = false;
+        }
+    }
+
     private string GetFullPhotoUrl(string? photoUrl)
     {
         if (string.IsNullOrWhiteSpace(photoUrl))
@@ -400,9 +411,23 @@
         return months > 0 ? $"{months}m" : "< 1m";
     }
 
+    private bool isCurrentUserProfile;
+
+    private async Task HandleExperienceUpdated(ExperienceModel updatedExperience)
+    {
+        // Mettre à jour l'expérience dans la liste locale
+        var index = Experiences?.FindIndex(e => e.Id == updatedExperience.Id) ?? -1;
+        if (index != -1 && Experiences != null)
+        {
+            Experiences[index] = updatedExperience;
+            StateHasChanged();
+        }
+    }
+
     protected override async Task OnInitializedAsync()
     {
         User = await AuthService.GetCurrentUserAsync();
+        isCurrentUserProfile = true; // Since this is the profile page, current user is always the owner
         if (User != null)
         {
             // Appels API pour récupérer les contenus de l'utilisateur

@@ -1,0 +1,185 @@
+@using Microsoft.AspNetCore.Components.Forms
+@using AlumniConnect.Front.Models
+@inject HttpClient Http
+@inject AlumniConnect.Front.Services.AuthService AuthService
+@inject IJSRuntime JSRuntime
+
+<div class="create-modal-overlay" id="@ModalId">
+    <div class="create-modal">
+        <div class="create-modal-header">
+            <h3 class="create-modal-title">
+                <i class="fas fa-briefcase"></i>
+                Ajouter une expérience professionnelle
+            </h3>
+            <button class="modal-close-btn" onclick="@($"closeModal('{ModalId}')")">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="create-modal-content">
+            <EditForm Model="@ExperienceModel" OnValidSubmit="@HandleSubmit">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="modal-form-group">
+                    <label class="modal-form-label">
+                        <i class="fas fa-briefcase"></i>
+                        Poste *
+                    </label>
+                    <InputText @bind-Value="ExperienceModel.Poste" class="modal-form-input" placeholder="Ex: Développeur Full-Stack" />
+                    <ValidationMessage For="@(() => ExperienceModel.Poste)" />
+                </div>
+
+                <div class="modal-form-group">
+                    <label class="modal-form-label">
+                        <i class="fas fa-building"></i>
+                        Entreprise *
+                    </label>
+                    <InputText @bind-Value="ExperienceModel.Entreprise" class="modal-form-input" placeholder="Ex: TechCorp" />
+                    <ValidationMessage For="@(() => ExperienceModel.Entreprise)" />
+                </div>
+
+                <div class="modal-form-group">
+                    <label class="modal-form-label">
+                        <i class="fas fa-map-marker-alt"></i>
+                        Localisation *
+                    </label>
+                    <InputText @bind-Value="ExperienceModel.Localisation" class="modal-form-input" placeholder="Ex: Paris, France" />
+                    <ValidationMessage For="@(() => ExperienceModel.Localisation)" />
+                </div>
+
+                <div class="modal-form-group">
+                    <label class="modal-form-label">
+                        <i class="fas fa-align-left"></i>
+                        Description
+                    </label>
+                    <InputTextArea @bind-Value="ExperienceModel.Description" class="modal-form-textarea" rows="5" placeholder="Décrivez vos missions, technologies utilisées, réalisations..." />
+                </div>
+
+                <div class="modal-form-grid">
+                    <div class="modal-form-group">
+                        <label class="modal-form-label">
+                            <i class="fas fa-calendar"></i>
+                            Date de début *
+                        </label>
+                        <InputDate @bind-Value="ExperienceModel.DateDebut" class="modal-form-input" />
+                        <ValidationMessage For="@(() => ExperienceModel.DateDebut)" />
+                    </div>
+                    <div class="modal-form-group">
+                        <label class="modal-form-label">
+                            <i class="fas fa-calendar-check"></i>
+                            Date de fin
+                        </label>
+                        <InputDate @bind-Value="ExperienceModel.DateFin" class="modal-form-input" disabled="@ExperienceModel.EnCours" />
+                    </div>
+                </div>
+
+                <div class="modal-form-group">
+                    <label>
+                        <InputCheckbox @bind-Value="ExperienceModel.EnCours" />
+                        <span style="margin-left: 8px;">En cours</span>
+                    </label>
+                </div>
+
+                <div class="modal-form-group">
+                    <label class="modal-form-label">
+                        <i class="fas fa-file-contract"></i>
+                        Type de contrat
+                    </label>
+                    <InputText @bind-Value="ExperienceModel.TypeContrat" class="modal-form-input" placeholder="Ex: CDI, CDD, Stage..." />
+                </div>
+
+                <div class="modal-form-group">
+                    <label class="modal-form-label">
+                        <i class="fas fa-industry"></i>
+                        Secteur
+                    </label>
+                    <InputText @bind-Value="ExperienceModel.Secteur" class="modal-form-input" placeholder="Ex: Technologie, Finance..." />
+                </div>
+
+                <div class="modal-form-actions">
+                    <button type="submit" class="modal-btn-primary" style="background: linear-gradient(135deg, #38a169, #3182ce);" disabled="@IsSubmitting">
+                        @if (IsSubmitting)
+                        {
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <span>Ajout...</span>
+                        }
+                        else
+                        {
+                            <i class="fas fa-plus"></i>
+                            <span>Ajouter l'expérience</span>
+                        }
+                    </button>
+                    <button type="button" class="modal-btn-secondary" onclick="@($"closeModal('{ModalId}')")">
+                        <i class="fas fa-times"></i>
+                        Annuler
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string ModalId { get; set; } = "createExperienceModal";
+    [Parameter] public ExperienceModel ExperienceModel { get; set; } = new();
+    [Parameter] public EventCallback<ExperienceModel> OnSubmit { get; set; }
+    [Parameter] public bool IsSubmitting { get; set; } = false;
+
+    private bool isSubmitting
+    {
+        get => IsSubmitting;
+        set
+        {
+            if (IsSubmitting != value)
+            {
+                IsSubmitting = value;
+                StateHasChanged();
+            }
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        try
+        {
+            isSubmitting = true;
+
+            var token = await AuthService.GetTokenAsync();
+            if (string.IsNullOrEmpty(token))
+                throw new Exception("Vous devez être connecté pour ajouter une expérience.");
+
+            Http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+            var response = await Http.PostAsJsonAsync("http://localhost:5175/api/experiences", ExperienceModel);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var createdExp = await response.Content.ReadFromJsonAsync<ExperienceModel>();
+                if (OnSubmit.HasDelegate && createdExp != null)
+                {
+                    await OnSubmit.InvokeAsync(createdExp);
+                }
+
+                // Reset du formulaire
+                ExperienceModel = new ExperienceModel();
+                StateHasChanged();
+
+                // Fermer le modal
+                await JSRuntime.InvokeVoidAsync("closeModal", ModalId);
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                throw new Exception($"Erreur lors de l'ajout de l'expérience : {errorContent}");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Erreur : {ex.Message}");
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}

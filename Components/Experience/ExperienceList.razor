@@ -1,5 +1,9 @@
-AlumniConnect.Front/Components/Experience/ExperienceList.razor
 @using AlumniConnect.Front.Models
+@using AlumniConnect.Front.Components.Forms
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
+
+<ExperienceEditForm @ref="editForm" ModalId="editExperienceModal" ExperienceModel="selectedExperience" OnSubmit="HandleExperienceUpdated" />
 
 @if (Experiences == null || !Experiences.Any())
 {
@@ -19,20 +23,36 @@ else
                         <strong>@exp.Poste</strong>
                         <span class="exp-company">@exp.Entreprise</span>
                     </div>
-                    <span class="exp-status">
-                        @if (exp.EnCours)
+                    <div class="exp-actions">
+                        <span class="exp-status">
+                            @if (exp.EnCours)
+                            {
+                                <span class="badge badge-success">En cours</span>
+                            }
+                            else if (!string.IsNullOrWhiteSpace(exp.Duree))
+                            {
+                                <span class="badge badge-secondary">@exp.Duree</span>
+                            }
+                            else if (exp.DateDebut != default && exp.DateFin.HasValue)
+                            {
+                                <span class="badge badge-secondary">@GetDuration(exp.DateDebut, exp.DateFin.Value)</span>
+                            }
+                        </span>
+
+                        @if (IsOwner)
                         {
-                            <span class="badge badge-success">En cours</span>
+                            <div class="dropdown ms-3">
+                                <button class="btn btn-icon action-button" @onclick="@(() => ToggleDropdown(exp.Id))">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <div class="dropdown-menu @(activeDropdown == exp.Id ? "show" : "")" @onclick:stopPropagation="true">
+                                    <button class="dropdown-item" @onclick="@(() => EditExperience(exp))">
+                                        <i class="fas fa-edit"></i> Modifier
+                                    </button>
+                                </div>
+                            </div>
                         }
-                        else if (!string.IsNullOrWhiteSpace(exp.Duree))
-                        {
-                            <span class="badge badge-secondary">@exp.Duree</span>
-                        }
-                        else if (exp.DateDebut != default && exp.DateFin.HasValue)
-                        {
-                            <span class="badge badge-secondary">@GetDuration(exp.DateDebut, exp.DateFin.Value)</span>
-                        }
-                    </span>
+                    </div>
                 </div>
                 <div class="exp-dates">
                     <span>
@@ -70,6 +90,16 @@ else
     [Parameter]
     public IEnumerable<ExperienceModel>? Experiences { get; set; }
 
+    [Parameter]
+    public bool IsOwner { get; set; }
+
+    [Parameter]
+    public EventCallback<ExperienceModel> OnExperienceUpdated { get; set; }
+
+    private Guid? activeDropdown;
+    private ExperienceModel selectedExperience = new();
+    private ExperienceEditForm? editForm;
+
     private string GetDuration(DateTime start, DateTime end)
     {
         var months = ((end.Year - start.Year) * 12) + end.Month - start.Month;
@@ -79,4 +109,173 @@ else
         var remMonths = months % 12;
         return remMonths == 0 ? $"{years}a" : $"{years}a {remMonths}m";
     }
+
+    private void ToggleDropdown(Guid experienceId)
+    {
+        if (activeDropdown == experienceId)
+            activeDropdown = null;
+        else
+            activeDropdown = experienceId;
+    }
+
+    private async Task EditExperience(ExperienceModel experience)
+    {
+        selectedExperience = experience;
+        await JSRuntime.InvokeVoidAsync("openModal", "editExperienceModal");
+        activeDropdown = null;
+    }
+
+    private async Task HandleExperienceUpdated(ExperienceModel updatedExperience)
+    {
+        if (OnExperienceUpdated.HasDelegate)
+        {
+            await OnExperienceUpdated.InvokeAsync(updatedExperience);
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Ajoutez un gestionnaire d'événements pour fermer le dropdown lors d'un clic à l'extérieur
+        await JSRuntime.InvokeVoidAsync("addClickOutsideHandler", "dropdown");
+    }
 }
+
+<style>
+    .experience-card {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .exp-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.5rem;
+    }
+
+    .exp-title {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .exp-company {
+        color: #666;
+        font-size: 0.9rem;
+    }
+
+    .exp-dates {
+        color: #666;
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .exp-location {
+        color: #666;
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .exp-description {
+        margin-top: 1rem;
+        white-space: pre-line;
+    }
+
+    .empty-experience {
+        text-align: center;
+        padding: 2rem;
+        color: #666;
+    }
+
+    .empty-experience i {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+        display: block;
+    }
+
+    .btn-icon {
+        background: none;
+        border: none;
+        padding: 0.5rem;
+        cursor: pointer;
+        color: #666;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+    }
+
+    .btn-icon:hover {
+        background-color: #f0f0f0;
+        color: #333;
+    }
+
+    .exp-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .dropdown {
+        position: relative;
+        display: inline-block;
+    }
+
+    .dropdown-menu {
+        position: absolute;
+        right: 0;
+        top: 100%;
+        background-color: white;
+        min-width: 160px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        border-radius: 4px;
+        display: none;
+        z-index: 1000;
+        margin-top: 0.5rem;
+        border: 1px solid #e2e8f0;
+    }
+
+    .dropdown-menu.show {
+        display: block;
+    }
+
+    .dropdown-item {
+        display: flex;
+        align-items: center;
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        border: none;
+        background: none;
+        width: 100%;
+        text-align: left;
+    }
+
+    .dropdown-item i {
+        margin-right: 0.5rem;
+    }
+
+    .dropdown-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    .badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+    }
+
+    .badge-success {
+        background-color: #38a169;
+        color: white;
+    }
+
+    .badge-secondary {
+        background-color: #718096;
+        color: white;
+    }
+</style>
