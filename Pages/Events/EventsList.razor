@@ -3,13 +3,14 @@
 @using AlumniConnect.Front.Components.Forms
 @using AlumniConnect.Front.Models
 @using AlumniConnect.Front.Utils
-@inject HttpClient Http
+
 
 <link href="css/shared-navbar.css" rel="stylesheet" />
 <link href="css/body-layout.css" rel="stylesheet" />
 <link href="css/dashboard.css" rel="stylesheet" />
 <link href="css/dashboard-responsive.css" rel="stylesheet" />
 <link href="css/modal-forms.css" rel="stylesheet" />
+<link href="css/temoignages.css" rel="stylesheet" />
 <script src="js/modals.js"></script>
 
 <!-- Composant Event Form -->
@@ -17,6 +18,12 @@
            EventModel="@eventModel"
            OnSubmit="@HandleEventSubmit"
            IsSubmitting="@isSubmitting" />
+
+<!-- Composant Edit Event Form -->
+<EditEventForm ModalId="editEventModal"
+               EventModel="@editingEvent"
+               OnSubmit="@HandleEventEdit"
+               IsSubmitting="@isSubmitting" />
 
 <!-- Navbar partagée -->
 <SharedNavbar ActivePage="events" RequireLogin="false" />
@@ -97,6 +104,35 @@
                                 <span>@eventItem.Date.ToString("dd MMMM yyyy à HH:mm")</span>
                             </div>
                         </div>
+                        @if (currentUserId != null && eventItem.UserId == currentUserId)
+                        {
+                            <div class="post-actions">
+                                <div class="dropdown">
+                                    <button type="button"
+                                            class="btn-icon"
+                                            @onclick="@(() => ShowOptionsMenu(eventItem.Id))"
+                                            title="Options">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                    @if (activeDropdownId == eventItem.Id.ToString())
+                                    {
+                                        <div class="dropdown-menu show" @onclick:stopPropagation data-id="@eventItem.Id">
+                                            <button type="button"
+                                                    class="dropdown-item"
+                                                    @onclick="@(() => ShowEditModal(eventItem))">
+                                                <i class="fas fa-edit"></i> Modifier
+                                            </button>
+                                            <button type="button"
+                                                    class="dropdown-item delete"
+                                                    @onclick="@(async () => await DeleteEvent(eventItem.Id))"
+                                                    @onclick:stopPropagation="true">
+                                                <i class="fas fa-trash"></i> Supprimer
+                                            </button>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
                     </div>
 
                     <!-- Contenu de l'événement -->
@@ -420,13 +456,24 @@
 
 @code {
     private EventModel eventModel = new();
+    private EventModel editingEvent = new();
     private bool isSubmitting = false;
     private List<EventModel>? events;
+    private string? currentUserId;
+    private string? activeDropdownId;
+
+    [Inject] private AlumniConnect.Front.Services.AuthService AuthService { get; set; }
+    [Inject] private IJSRuntime JS { get; set; }
+    [Inject] private HttpClient Http { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
+            // Récupérer l'utilisateur courant pour l'autorisation des actions
+            var user = await AuthService.GetCurrentUserAsync();
+            currentUserId = user?.Id;
+
             events = await Http.GetFromJsonAsync<List<EventModel>>("http://localhost:5175/api/events");
         }
         catch (Exception ex)
@@ -434,6 +481,13 @@
             Console.WriteLine($"Erreur lors du chargement des événements: {ex.Message}");
             events = new List<EventModel>();
         }
+    }
+
+    private void ShowOptionsMenu(Guid eventId)
+    {
+        var idStr = eventId.ToString();
+        activeDropdownId = activeDropdownId == idStr ? null : idStr;
+        StateHasChanged();
     }
 
     private async Task HandleEventSubmit(EventModel model)
@@ -456,6 +510,73 @@
         {
             isSubmitting = false;
             StateHasChanged();
+        }
+    }
+
+    private async Task DeleteEvent(Guid eventId)
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm", "Êtes-vous sûr de vouloir supprimer cet événement ?");
+        if (!confirmed) return;
+
+        var token = await AuthService.GetTokenAsync();
+        if (!string.IsNullOrEmpty(token))
+            Http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        var response = await Http.DeleteAsync($"http://localhost:5175/api/events/{eventId}");
+        if (response.IsSuccessStatusCode)
+        {
+            events?.RemoveAll(e => e.Id == eventId);
+            StateHasChanged();
+            await JS.InvokeVoidAsync("alert", "Événement supprimé avec succès !");
+        }
+        else
+        {
+            var error = await response.Content.ReadAsStringAsync();
+            await JS.InvokeVoidAsync("alert", $"Erreur lors de la suppression : {error}");
+        }
+    }
+
+    private async Task ShowEditModal(EventModel eventItem)
+    {
+        editingEvent = new EventModel
+        {
+            Id = eventItem.Id,
+            Title = eventItem.Title,
+            Description = eventItem.Description,
+            Date = eventItem.Date,
+            Location = eventItem.Location,
+            Organizer = eventItem.Organizer,
+            ImageUrl = eventItem.ImageUrl,
+            UserId = eventItem.UserId,
+            CreatorName = eventItem.CreatorName,
+            CreatorEmail = eventItem.CreatorEmail,
+            ImageBase64 = eventItem.ImageBase64
+        };
+        await JS.InvokeVoidAsync("openModal", "editEventModal");
+    }
+
+    private async Task HandleEventEdit(EventModel updatedEvent)
+    {
+        var token = await AuthService.GetTokenAsync();
+        if (!string.IsNullOrEmpty(token))
+            Http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        var response = await Http.PutAsJsonAsync($"http://localhost:5175/api/events/{updatedEvent.Id}", updatedEvent);
+        if (response.IsSuccessStatusCode)
+        {
+            var index = events?.FindIndex(e => e.Id == updatedEvent.Id) ?? -1;
+            if (index != -1 && events != null)
+            {
+                events[index] = updatedEvent;
+                StateHasChanged();
+                await JS.InvokeVoidAsync("closeModal", "editEventModal");
+                await JS.InvokeVoidAsync("alert", "Événement modifié avec succès !");
+            }
+        }
+        else
+        {
+            var error = await response.Content.ReadAsStringAsync();
+            await JS.InvokeVoidAsync("alert", $"Erreur lors de la mise à jour : {error}");
         }
     }
 }

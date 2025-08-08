@@ -1,0 +1,223 @@
+@using Microsoft.AspNetCore.Components.Forms
+@using AlumniConnect.Front.Models
+@using Microsoft.AspNetCore.JsonPatch
+@using AlumniConnect.Front.Extensions
+@inject AlumniConnect.Front.Services.AuthService AuthService
+@inject HttpClient Http
+@inject IJSRuntime JSRuntime
+
+<div class="create-modal-overlay" id="@ModalId">
+    <div class="create-modal">
+        <div class="create-modal-header">
+            <h3 class="create-modal-title">
+                <i class="fas fa-calendar-alt"></i>
+                Modifier l'événement
+            </h3>
+            <button class="modal-close-btn" onclick="@($"closeModal('{ModalId}')")">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="create-modal-content">
+            <EditForm Model="@eventModel" OnValidSubmit="@HandleSubmit" id="editEventForm">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="modal-form-group">
+                    <label class="modal-form-label">
+                        <i class="fas fa-calendar-alt"></i>
+                        Titre de l'événement *
+                    </label>
+                    <InputText @bind-Value="eventModel.Title" class="modal-form-input" placeholder="Ex: Conférence Tech Alumni 2024" />
+                    <ValidationMessage For="@(() => eventModel.Title)" />
+                </div>
+
+                <div class="modal-form-group">
+                    <label class="modal-form-label">
+                        <i class="fas fa-user"></i>
+                        Organisateur *
+                    </label>
+                    <InputText @bind-Value="eventModel.Organizer" class="modal-form-input" placeholder="Votre nom ou nom de l'organisation" />
+                    <ValidationMessage For="@(() => eventModel.Organizer)" />
+                </div>
+
+                <div class="modal-form-group">
+                    <label class="modal-form-label">
+                        <i class="fas fa-clock"></i>
+                        Date et heure *
+                    </label>
+                    <InputDate Type="InputDateType.DateTimeLocal" @bind-Value="eventModel.Date" class="modal-form-input" />
+                    <ValidationMessage For="@(() => eventModel.Date)" />
+                </div>
+
+                <div class="modal-form-group">
+                    <label class="modal-form-label">
+                        <i class="fas fa-map-marker-alt"></i>
+                        Lieu *
+                    </label>
+                    <InputText @bind-Value="eventModel.Location" class="modal-form-input" placeholder="Ex: Auditorium Central, Campus Université" />
+                    <ValidationMessage For="@(() => eventModel.Location)" />
+                </div>
+
+                <div class="modal-form-group">
+                    <label class="modal-form-label">
+                        <i class="fas fa-align-left"></i>
+                        Description de l'événement *
+                    </label>
+                    <InputTextArea @bind-Value="eventModel.Description" class="modal-form-textarea" placeholder="Décrivez votre événement, le programme, les objectifs..." />
+                    <ValidationMessage For="@(() => eventModel.Description)" />
+                </div>
+
+                <div class="modal-form-group">
+                    <label class="modal-form-label">
+                        <i class="fas fa-image"></i>
+                        Image de l'événement (optionnel)
+                    </label>
+                    <div class="modal-form-file-container">
+                        <div class="modal-form-file-input">
+                            <InputFile OnChange="@HandleImageSelection" accept="image/*" />
+                            <div class="modal-form-file-label">
+                                <div class="modal-form-file-icon">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                </div>
+                                <div class="modal-form-file-text">
+                                    @if (!string.IsNullOrEmpty(selectedImageName))
+                                    {
+                                        <span>📁 @selectedImageName</span>
+                                    }
+                                    else
+                                    {
+                                        <span>Cliquez pour sélectionner une image</span>
+                                    }
+                                </div>
+                                <div class="modal-form-file-hint">PNG, JPG, GIF jusqu'à 5MB</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-form-actions">
+                    <button type="submit" class="modal-btn-primary" style="background: linear-gradient(135deg, #ed8936, #dd6b20);" disabled="@isSubmitting">
+                        @if (isSubmitting)
+                        {
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <span>Enregistrement...</span>
+                        }
+                        else
+                        {
+                            <i class="fas fa-save"></i>
+                            <span>Enregistrer les modifications</span>
+                        }
+                    </button>
+                    <button type="button" class="modal-btn-secondary" onclick="@($"closeModal('{ModalId}')")">
+                        <i class="fas fa-times"></i>
+                        Annuler
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string ModalId { get; set; } = "editEventModal";
+    [Parameter] public EventModel EventModel { get; set; } = new();
+    [Parameter] public EventCallback<EventModel> OnSubmit { get; set; }
+    [Parameter] public bool IsSubmitting { get; set; } = false;
+
+    private EventModel eventModel = new();
+    private bool isSubmitting = false;
+    private string selectedImageName = string.Empty;
+    private string? imagePreview;
+
+    protected override void OnParametersSet()
+    {
+        // Copier les données de l'événement à modifier
+        eventModel = new EventModel
+        {
+            Id = EventModel.Id,
+            Title = EventModel.Title,
+            Description = EventModel.Description,
+            Date = EventModel.Date,
+            Location = EventModel.Location,
+            Organizer = EventModel.Organizer,
+            ImageUrl = EventModel.ImageUrl,
+            UserId = EventModel.UserId,
+            CreatorName = EventModel.CreatorName,
+            CreatorEmail = EventModel.CreatorEmail
+        };
+    }
+
+private async Task HandleSubmit()
+{
+    try
+    {
+        // Validation basique
+        if (string.IsNullOrWhiteSpace(eventModel.Title) || string.IsNullOrWhiteSpace(eventModel.Description))
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Veuillez remplir tous les champs obligatoires");
+            return;
+        }
+
+        isSubmitting = true;
+        StateHasChanged();
+
+        var token = await AuthService.GetTokenAsync();
+        if (string.IsNullOrEmpty(token))
+        {
+            throw new Exception("Vous devez être connecté pour modifier un événement.");
+        }
+
+        Http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        // Utiliser PUT pour mettre à jour l'événement
+        var response = await Http.PutAsJsonAsync($"http://localhost:5175/api/events/{eventModel.Id}", eventModel);
+
+        if (response.IsSuccessStatusCode)
+        {
+            await JSRuntime.InvokeVoidAsync("closeModal", ModalId);
+
+            if (OnSubmit.HasDelegate)
+            {
+                await OnSubmit.InvokeAsync(eventModel);
+            }
+
+            await JSRuntime.InvokeVoidAsync("alert", "Événement modifié avec succès !");
+            await JSRuntime.InvokeVoidAsync("location.reload");
+        }
+        else
+        {
+            var error = await response.Content.ReadAsStringAsync();
+            throw new Exception($"Erreur lors de la modification: {error}");
+        }
+    }
+    catch (Exception ex)
+    {
+        await JSRuntime.InvokeVoidAsync("alert", $"Erreur: {ex.Message}");
+        Console.WriteLine($"Erreur lors de la modification: {ex.Message}");
+    }
+    finally
+    {
+        isSubmitting = false;
+        StateHasChanged();
+    }
+}
+
+
+
+
+    private async Task HandleImageSelection(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file != null)
+        {
+            selectedImageName = file.Name;
+            using var stream = file.OpenReadStream(5 * 1024 * 1024);
+            using var memoryStream = new MemoryStream();
+            await stream.CopyToAsync(memoryStream);
+            var bytes = memoryStream.ToArray();
+            imagePreview = $"data:{file.ContentType};base64,{Convert.ToBase64String(bytes)}";
+            eventModel.ImageBase64 = imagePreview;
+            StateHasChanged();
+        }
+    }
+}
