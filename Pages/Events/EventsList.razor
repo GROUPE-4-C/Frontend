@@ -2,10 +2,13 @@
 @layout MainLayout
 @using AlumniConnect.Front.Components.Forms
 @using AlumniConnect.Front.Models
+@using AlumniConnect.Front.Utils
+@inject HttpClient Http
 
 <link href="css/shared-navbar.css" rel="stylesheet" />
 <link href="css/body-layout.css" rel="stylesheet" />
 <link href="css/dashboard.css" rel="stylesheet" />
+<link href="css/dashboard-responsive.css" rel="stylesheet" />
 <link href="css/modal-forms.css" rel="stylesheet" />
 <script src="js/modals.js"></script>
 
@@ -21,18 +24,17 @@
 <!-- Main Container -->
 <div class="main-container">
     <!-- Sidebar Left -->
-    <aside class="welcome-card">
+    <aside class="welcome-card static-sidebar" style="min-width: 300px; max-width: 300px;">
         <h3>🗓️ Événements Alumni</h3>
         <p>Découvrez les événements organisés par notre communauté d'alumni et participez à la vie du réseau.</p>
         <button class="login-cta" onclick="openModal('createEventModal')">
-    <i class="fas fa-plus"></i>
-    Créer un événement
-</button>
-
+            <i class="fas fa-plus"></i>
+            Créer un événement
+        </button>
     </aside>
 
     <!-- Main Feed -->
-    <main class="main-feed">
+    <main class="main-feed scrollable-feed">
         <!-- Filter Bar -->
         <div class="post-composer">
             <div class="composer-input">
@@ -60,153 +62,378 @@
         </div>
 
         <!-- Event Posts -->
-        @foreach (var eventItem in events)
+        @if (events == null)
         {
-            <article class="post">
-                <div class="post-header">
-                    <div class="post-avatar" style="background: linear-gradient(135deg, #ed8936, #dd6b20);">🎯</div>
-                    <div class="post-author-info">
-                        <div class="post-author-name">@eventItem.Title</div>
-                        <div class="post-author-title">Organisé par @eventItem.Organizer</div>
-                        <div class="post-time">
-                            <span>@eventItem.Date.ToString("dd/MM/yyyy HH:mm")</span>
+            <div class="loading-state">
+                <div class="loading-spinner"></div>
+                <p>Chargement des événements...</p>
+            </div>
+        }
+        else if (!events.Any())
+        {
+            <div class="empty-state">
+                <i class="fas fa-calendar-alt"></i>
+                <h3>Aucun événement</h3>
+                <p>Les événements apparaîtront ici.</p>
+            </div>
+        }
+        else
+        {
+            @foreach (var eventItem in events.OrderByDescending(e => e.Date))
+            {
+                <article class="post event-card">
+                    <!-- En-tête de l'événement -->
+                    <div class="post-header">
+                        <div class="post-avatar event-avatar">
                             <i class="fas fa-calendar-alt"></i>
                         </div>
-                    </div>
-                </div>
-
-                <div class="post-content">
-                    <div class="testimonial-badge" style="background: linear-gradient(135deg, #ed8936, #dd6b20);">
-                        <i class="fas fa-calendar-alt"></i>
-                        Événement
-                    </div>
-
-                    <h3 style="color: #2d3748; margin-bottom: 12px;">@eventItem.Title</h3>
-
-                    <p><strong>📅 Date :</strong> @eventItem.Date.ToString("dd MMMM yyyy à HH:mm")</p>
-                    <p><strong>📍 Lieu :</strong> @eventItem.Location</p>
-                    <p><strong>👨‍💼 Organisateur :</strong> @eventItem.Organizer</p>
-
-                    <div style="margin: 16px 0; padding: 16px; background: #f8fafc; border-radius: 8px; border-left: 4px solid #ed8936;">
-                        @eventItem.Description
+                        <div class="post-author-info">
+                            <div class="post-author-name">@eventItem.Title</div>
+                            <div class="post-author-title">
+                                Organisé par <strong>@eventItem.Organizer</strong>
+                            </div>
+                            <div class="post-time">
+                                <i class="fas fa-clock"></i>
+                                <span>@eventItem.Date.ToString("dd MMMM yyyy à HH:mm")</span>
+                            </div>
+                        </div>
                     </div>
 
-                    <strong>#Événement #Alumni #@eventItem.Organizer.Replace(" ", "")</strong>
-                </div>
+                    <!-- Contenu de l'événement -->
+                    <div class="post-content">
+                        <!-- Badge événement -->
+                        <div class="testimonial-badge event-badge">
+                            <i class="fas fa-calendar-alt"></i>
+                            Événement
+                        </div>
 
-                <div class="post-stats">
-                    <span>👥 @Random.Shared.Next(10, 80) participants • @Random.Shared.Next(5, 30) intéressés</span>
-                    <span>@Random.Shared.Next(2, 15) partages</span>
-                </div>
+                        <!-- Titre principal -->
+                        <h3 class="event-title">@eventItem.Title</h3>
 
-                <div class="post-actions">
-                    <div class="post-action">
-                        <i class="fas fa-check"></i>
-                        Participer
+                        <!-- Image de l'événement si disponible -->
+                        @if (!string.IsNullOrEmpty(eventItem.ImageUrl))
+                        {
+                            <div class="event-image-container">
+                                <img src="@EventImageHelper.GetEventImageUrl(eventItem.ImageUrl)"
+                                     alt="Image de l'événement @eventItem.Title"
+                                     class="event-image" />
+                            </div>
+                        }
+
+                        <!-- Informations principales de l'événement -->
+                        <div class="event-info-grid">
+                            <div class="event-info-item">
+                                <i class="fas fa-calendar-day"></i>
+                                <div>
+                                    <strong>Date & Heure</strong>
+                                    <span>@eventItem.Date.ToString("dddd dd MMMM yyyy")</span>
+                                    <span>à @eventItem.Date.ToString("HH:mm")</span>
+                                </div>
+                            </div>
+
+                            <div class="event-info-item">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <div>
+                                    <strong>Lieu</strong>
+                                    <span>@eventItem.Location</span>
+                                </div>
+                            </div>
+
+                            <div class="event-info-item">
+                                <i class="fas fa-user-tie"></i>
+                                <div>
+                                    <strong>Organisateur</strong>
+                                    <span>@eventItem.Organizer</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Description de l'événement -->
+                        <div class="event-description">
+                            <h4><i class="fas fa-info-circle"></i> Description</h4>
+                            <p>@eventItem.Description</p>
+                        </div>
+
+                        <!-- Informations du créateur (optionnel, peut être masqué) -->
+                        <div class="event-creator-info">
+                            <small>
+                                <i class="fas fa-user"></i>
+                                Créé par <strong>@eventItem.CreatorName</strong>
+                                (<a href="mailto:@eventItem.CreatorEmail" class="creator-email">@eventItem.CreatorEmail</a>)
+                            </small>
+                        </div>
+
+                        <!-- Tags de l'événement -->
+                        <div class="event-tags">
+                            <span class="event-tag">#Événement</span>
+                            <span class="event-tag">#Alumni</span>
+                            <span class="event-tag">#@eventItem.Organizer.Replace(" ", "")</span>
+                        </div>
                     </div>
-                    <div class="post-action">
-                        <i class="fas fa-star"></i>
-                        Intéressé
-                    </div>
-                    <div class="post-action">
-                        <i class="fas fa-share"></i>
-                        Partager
-                    </div>
-                    <div class="post-action">
-                        <i class="fas fa-info-circle"></i>
-                        Détails
-                    </div>
-                </div>
-            </article>
+                </article>
+            }
         }
 
-        <!-- Additional static event for demo -->
-        <article class="post">
-            <div class="post-header">
-                <div class="post-avatar" style="background: linear-gradient(135deg, #9f7aea, #805ad5);">🍷</div>
-                <div class="post-author-info">
-                    <div class="post-author-name">Soirée Networking Alumni</div>
-                    <div class="post-author-title">Organisé par Mustafa Sa'eed' • Promo 2012</div>
-                    <div class="post-time">
-                        <span>Dans 10 jours</span>
-                        <i class="fas fa-calendar-alt"></i>
-                    </div>
-                </div>
-            </div>
-
-            <div class="post-content">
-                <div class="testimonial-badge" style="background: linear-gradient(135deg, #9f7aea, #805ad5);">
-                    <i class="fas fa-calendar-alt"></i>
-                    Événement
-                </div>
-
-                <h3 style="color: #2d3748; margin-bottom: 12px;">Soirée Networking Alumni</h3>
-
-                <p><strong>📅 Date :</strong> 20 Mars 2024 à 19h00</p>
-                <p><strong>📍 Lieu :</strong> Rooftop Le Meridien, Paris</p>
-                <p><strong>👨‍💼 Organisateur :</strong> Mustafa Sa'eed'</p>
-
-                <div style="margin: 16px 0; padding: 16px; background: #f8fafc; border-radius: 8px; border-left: 4px solid #9f7aea;">
-                    Une soirée conviviale pour échanger, créer des liens et développer votre réseau professionnel !
-                    <br><br>
-                    <strong>Au programme :</strong> Cocktail dînatoire, présentation des nouveaux alumni, échanges libres
-                </div>
-
-                <strong>#Networking #Alumni #Soirée #Paris</strong>
-            </div>
-
-            <div class="post-stats">
-                <span>👥 32 participants • 15 intéressés</span>
-                <span>12 partages</span>
-            </div>
-
-            <div class="post-actions">
-                <div class="post-action">
-                    <i class="fas fa-check"></i>
-                    Participer
-                </div>
-                <div class="post-action">
-                    <i class="fas fa-star"></i>
-                    Intéressé
-                </div>
-                <div class="post-action">
-                    <i class="fas fa-share"></i>
-                    Partager
-                </div>
-                <div class="post-action">
-                    <i class="fas fa-info-circle"></i>
-                    Détails
-                </div>
-            </div>
-        </article>
     </main>
 </div>
+
+<style>
+    /* Styles spécifiques pour les événements */
+    .event-card {
+        border-left: 4px solid #ed8936;
+        margin-bottom: 24px;
+    }
+
+    .event-avatar {
+        background: linear-gradient(135deg, #ed8936, #dd6b20);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+    }
+
+    .event-badge {
+        background: linear-gradient(135deg, #ed8936, #dd6b20);
+        margin-bottom: 16px;
+    }
+
+    .event-title {
+        color: #2d3748;
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 20px;
+        line-height: 1.3;
+    }
+
+    .event-image-container {
+        margin: 20px 0;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .event-image {
+        width: 100%;
+        height: 250px;
+        object-fit: cover;
+        display: block;
+    }
+
+    .event-info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 16px;
+        margin: 20px 0;
+        padding: 20px;
+        background: #f8fafc;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .event-info-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .event-info-item i {
+        color: #ed8936;
+        font-size: 18px;
+        margin-top: 2px;
+        min-width: 20px;
+    }
+
+    .event-info-item div {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .event-info-item strong {
+        color: #2d3748;
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .event-info-item span {
+        color: #4a5568;
+        font-size: 14px;
+    }
+
+    .event-description {
+        margin: 20px 0;
+        padding: 20px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-left: 4px solid #ed8936;
+        border-radius: 8px;
+    }
+
+    .event-description h4 {
+        color: #2d3748;
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .event-description h4 i {
+        color: #ed8936;
+    }
+
+    .event-description p {
+        color: #4a5568;
+        line-height: 1.6;
+        margin-bottom: 8px;
+    }
+
+    .event-creator-info {
+        margin: 16px 0;
+        padding: 12px;
+        background: #f7fafc;
+        border-radius: 6px;
+        border-left: 3px solid #cbd5e0;
+    }
+
+    .creator-email {
+        color: #ed8936;
+        text-decoration: none;
+    }
+
+    .creator-email:hover {
+        text-decoration: underline;
+    }
+
+    .event-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 16px 0;
+    }
+
+    .event-tag {
+        background: #fed7c7;
+        color: #c05621;
+        padding: 6px 12px;
+        border-radius: 16px;
+        font-size: 12px;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .event-stats {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 20px;
+        background: #f8fafc;
+        border-top: 1px solid #e2e8f0;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: #4a5568;
+        font-size: 14px;
+    }
+
+    .stat-item i {
+        color: #ed8936;
+    }
+
+    .event-actions {
+        padding: 16px 20px;
+        background: #ffffff;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .event-actions .post-action {
+        flex: 1;
+        min-width: 120px;
+        padding: 12px 16px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        background: #ffffff;
+        color: #4a5568;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .event-actions .primary-action {
+        background: #ed8936;
+        color: white;
+        border-color: #ed8936;
+    }
+
+    .event-actions .primary-action:hover {
+        background: #dd6b20;
+        border-color: #dd6b20;
+    }
+
+    .event-actions .secondary-action {
+        background: #fff5f0;
+        color: #c05621;
+        border-color: #fed7c7;
+    }
+
+    .event-actions .secondary-action:hover {
+        background: #fed7c7;
+    }
+
+    .event-actions .post-action:hover {
+        background: #f7fafc;
+        border-color: #cbd5e0;
+    }
+
+    /* Responsive design */
+    @@media (max-width: 768px) {
+        .event-info-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .event-actions {
+            flex-direction: column;
+        }
+
+        .event-actions .post-action {
+            min-width: auto;
+        }
+
+        .event-image {
+            height: 200px;
+        }
+    }
+</style>
 
 @code {
     private EventModel eventModel = new();
     private bool isSubmitting = false;
-    private List<EventModel> events = new();
+    private List<EventModel>? events;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        // Données de test
-        events = new List<EventModel>
+        try
         {
-            new() {
-                Title = "Conférence Tech Alumni 2024",
-                Organizer = "Aliyah Wek",
-                Location = "Auditorium Central, Campus Université",
-                Description = "Rejoignez-nous pour une journée dédiée aux dernières innovations technologiques ! Conférences, ateliers pratiques et networking avec des experts du secteur.",
-                Date = DateTime.Now.AddDays(5).AddHours(14)
-            },
-            new() {
-                Title = "Workshop Intelligence Artificielle",
-                Organizer = "Dr. Alpha Tela",
-                Location = "Lab Innovation, Paris",
-                Description = "Atelier pratique sur les dernières avancées en IA et machine learning. Destiné aux professionnels souhaitant approfondir leurs connaissances.",
-                Date = DateTime.Now.AddDays(15).AddHours(10)
-            }
-        };
+            events = await Http.GetFromJsonAsync<List<EventModel>>("http://localhost:5175/api/events");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erreur lors du chargement des événements: {ex.Message}");
+            events = new List<EventModel>();
+        }
     }
 
     private async Task HandleEventSubmit(EventModel model)
@@ -219,7 +446,7 @@
             // Ici vous appellerez votre API
             await Task.Delay(2000); // Simulation
 
-            events.Insert(0, model);
+            events?.Insert(0, model);
             eventModel = new(); // Reset du formulaire
 
             // Simuler la fermeture du modal via JavaScript

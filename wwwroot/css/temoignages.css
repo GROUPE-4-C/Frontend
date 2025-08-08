@@ -1,0 +1,28 @@
+.avatar-img {
+    border-radius: 50%;
+    object-fit: cover;
+    width: 48px;
+    height: 48px;
+    border: 2px solid #e2e8f0;
+    background: #fff;
+    display: block;
+}
+
+@media (max-width: 900px) {
+    .temoignages-layout {
+        flex-direction: column;
+        height: auto;
+    }
+    .static-sidebar {
+        position: static;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        height: auto;
+        margin-bottom: 16px;
+    }
+    .scrollable-feed {
+        height: auto;
+        overflow-y: visible;
+    }
+}

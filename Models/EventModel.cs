@@ -29,5 +29,12 @@ namespace AlumniConnect.Front.Models
         public string? ImageUrl { get; set; }
 
         public string UserId { get; set; } = string.Empty;
+
+        // Ajout pour affichage du créateur
+        public string CreatorName { get; set; } = string.Empty;
+        public string CreatorEmail { get; set; } = string.Empty;
+
+        // Pour upload base64 (non mappé en base, juste pour la création)
+        public string? ImageBase64 { get; set; }
     }
 }

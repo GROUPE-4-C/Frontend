@@ -194,6 +194,7 @@ body {
 
 /* Welcome card for anonymous users */
 .welcome-card {
+    height: fit-content;
     background: white;
     border-radius: 16px;
     padding: 24px;
@@ -364,7 +365,7 @@ body {
 .post {
     background: white;
     border-radius: 16px;
-    overflow: hidden;
+    /*overflow: hidden;*/
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
     border: 1px solid #e2e8f0;
     transition: transform 0.3s ease;

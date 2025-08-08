@@ -1,5 +1,7 @@
 @using Microsoft.AspNetCore.Components.Forms
 @using AlumniConnect.Front.Models
+@inject AlumniConnect.Front.Services.AuthService AuthService
+@inject HttpClient Http
 
 <div class="create-modal-overlay" id="@ModalId">
     <div class="create-modal">
@@ -120,22 +122,48 @@
     [Parameter] public bool IsSubmitting { get; set; } = false;
 
     private string selectedImageName = string.Empty;
+    private string? imagePreview;
 
     private async Task HandleSubmit()
     {
-        if (OnSubmit.HasDelegate)
+        // Rien à faire ici pour l'image : elle est déjà encodée en base64 dans EventModel.ImageBase64
+        var token = await AuthService.GetTokenAsync();
+        if (!string.IsNullOrEmpty(token))
+            Http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+        var response = await Http.PostAsJsonAsync("http://localhost:5175/api/events", EventModel);
+        if (response.IsSuccessStatusCode)
         {
-            await OnSubmit.InvokeAsync(EventModel);
+            // Succès : reset, ferme le modal, etc.
+            if (OnSubmit.HasDelegate)
+            {
+                await OnSubmit.InvokeAsync(EventModel);
+            }
+            // Optionnel : reset du formulaire
+            EventModel = new EventModel();
+            selectedImageName = string.Empty;
+            imagePreview = null;
+            StateHasChanged();
+            // Fermer le modal via JS si besoin
+        }
+        else
+        {
+            // Gère l'erreur (optionnel)
         }
     }
 
-    private void HandleImageSelection(InputFileChangeEventArgs e)
+    private async Task HandleImageSelection(InputFileChangeEventArgs e)
     {
         var file = e.File;
         if (file != null)
         {
             selectedImageName = file.Name;
-            EventModel.ImageUrl = $"/uploads/{file.Name}";
+            using var stream = file.OpenReadStream(5 * 1024 * 1024);
+            using var memoryStream = new MemoryStream();
+            await stream.CopyToAsync(memoryStream);
+            var bytes = memoryStream.ToArray();
+            imagePreview = $"data:{file.ContentType};base64,{Convert.ToBase64String(bytes)}";
+            EventModel.ImageBase64 = imagePreview;
             StateHasChanged();
         }
     }

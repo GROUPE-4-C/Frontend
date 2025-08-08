@@ -2,11 +2,19 @@
 @layout MainLayout
 @using AlumniConnect.Front.Components.Forms
 @using AlumniConnect.Front.Models
+@using AlumniConnect.Front.Utils
+@using AlumniConnect.Front.Services
+@inject HttpClient Http
+@inject AuthService AuthService
+@inject IJSRuntime JSRuntime
+
 
 <link href="css/shared-navbar.css" rel="stylesheet" />
 <link href="css/body-layout.css" rel="stylesheet" />
 <link href="css/dashboard.css" rel="stylesheet" />
 <link href="css/modal-forms.css" rel="stylesheet" />
+<link href="css/temoignages.css" rel="stylesheet" />
+
 <script src="js/modals.js"></script>
 
 <!-- Composant Temoignage Form -->
@@ -19,20 +27,19 @@
 <SharedNavbar ActivePage="temoignages" RequireLogin="false" />
 
 <!-- Main Container -->
-<div class="main-container">
+<div class="main-container temoignages-layout">
     <!-- Sidebar Left -->
-    <aside class="welcome-card">
+    <aside class="welcome-card static-sidebar">
         <h3>⭐ Témoignages Alumni</h3>
         <p>Partagez votre expérience et découvrez les parcours inspirants de notre communauté d'alumni.</p>
-       <button class="login-cta" onclick="openModal('createTemoignageModal')">
-    <i class="fas fa-plus"></i>
-    Rédiger un témoignage
-</button>
-
+        <button class="login-cta" onclick="openModal('createTemoignageModal')">
+            <i class="fas fa-plus"></i>
+            Rédiger un témoignage
+        </button>
     </aside>
 
     <!-- Main Feed -->
-    <main class="main-feed">
+    <main class="main-feed scrollable-feed">
         <!-- Filter Bar -->
         <div class="post-composer">
             <div class="composer-input">
@@ -59,243 +66,132 @@
             </div>
         </div>
 
-        <!-- Testimonial Posts dynamiques -->
-        @foreach (var temoignage in temoignages)
+        <!-- Testimonials Feed identique à Dashboard -->
+        @if (temoignages == null)
         {
-            <article class="post testimonial-post">
-                <div class="post-header">
-                    <div class="post-avatar" style="background: linear-gradient(135deg, #9f7aea, #805ad5);">
-                        @(temoignage.UserName.Length > 0 ? temoignage.UserName.Substring(0, Math.Min(2, temoignage.UserName.Length)) : "AL")
-                    </div>
-                    <div class="post-author-info">
-                        <div class="post-author-name">@temoignage.UserName</div>
-                        <div class="post-author-title">@temoignage.UserTitle</div>
-                        <div class="post-time">
-                            <span>@temoignage.Date.ToString("dd/MM/yyyy")</span>
-                            <i class="fas fa-globe-americas"></i>
+            <div class="loading-state">
+                <div class="loading-spinner"></div>
+                <p>Chargement des témoignages...</p>
+            </div>
+        }
+        else if (!temoignages.Any())
+        {
+            <div class="empty-state">
+                <i class="fas fa-star"></i>
+                <h3>Aucun témoignage</h3>
+                <p>Les témoignages apparaîtront ici.</p>
+            </div>
+        }
+        else
+        {
+            @foreach (var temoignage in temoignages.OrderByDescending(t => t.Date))
+            {
+                <article class="post testimonial-post">
+                    <div class="post-header">
+                        <div class="post-avatar" style="background: linear-gradient(135deg, #9f7aea, #805ad5);">
+                            @if (!string.IsNullOrEmpty(temoignage.PhotoUrl))
+                            {
+                                <img src="@(PhotoUrlHelper.GetFullPhotoUrl(temoignage.PhotoUrl))" alt="Avatar" class="avatar-img" />
+                            }
+                            else
+                            {
+                                <span>@(string.IsNullOrEmpty(temoignage.FullName) ? "??" : (temoignage.FullName.Length >= 2 ? temoignage.FullName.Substring(0, 2) : temoignage.FullName))</span>
+                            }
+                        </div>
+                        <div class="post-author-info">
+                            <div class="post-author-name">@temoignage.FullName</div>
+                            <div class="post-author-title">@temoignage.Profession • @temoignage.Promotion</div>
+                            <div class="post-time">
+                                <span>@FormatDate(temoignage.Date)</span>
+                                <i class="fas fa-globe-americas"></i>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="post-content">
-                    <div class="testimonial-badge">
-                        <i class="fas fa-star"></i>
-                        Témoignage
-                    </div>
+                    <div class="post-content">
+                        <div class="testimonial-badge">
+                            <i class="fas fa-star"></i>
+                            Témoignage
+                        </div>
 
-                    <div style="margin: 16px 0; padding: 20px; background: linear-gradient(135deg, rgba(159, 122, 234, 0.1), rgba(102, 126, 234, 0.1)); border-radius: 12px; border-left: 4px solid #9f7aea;">
-                        @temoignage.Contenu
-                    </div>
+                        @((MarkupString)FormatContent(temoignage.Contenu))
 
-                    @if (!string.IsNullOrEmpty(temoignage.MotsCles))
-                    {
-                        <strong>@temoignage.MotsCles</strong>
-                    }
-                </div>
-
-                <div class="post-stats">
-                    <span>⭐ @Random.Shared.Next(10, 50) réactions • @Random.Shared.Next(5, 20) commentaires</span>
-                    <span>@Random.Shared.Next(2, 15) partages</span>
-                </div>
-
-                <div class="post-actions">
-                    <div class="post-action">
-                        <i class="fas fa-heart"></i>
-                        Inspirer
+                        @if (!string.IsNullOrEmpty(temoignage.MotsCles))
+                        {
+                            <br><br>
+                            <div class="tags">
+                                <span class="tag">#Témoignage</span>
+                                @foreach (var tag in temoignage.MotsCles.Split(','))
+                                {
+                                    <span class="tag">#@tag.Trim()</span>
+                                }
+                            </div>
+                        }
                     </div>
-                    <div class="post-action">
-                        <i class="far fa-comment"></i>
-                        Commenter
-                    </div>
-                    <div class="post-action">
-                        <i class="fas fa-share"></i>
-                        Partager
-                    </div>
-                    <div class="post-action">
-                        <i class="fas fa-bookmark"></i>
-                        Sauvegarder
-                    </div>
-                </div>
-            </article>
+                </article>
+            }
         }
-
-        <!-- Témoignage statique 1 -->
-        <article class="post testimonial-post">
-            <div class="post-header">
-                <div class="post-avatar" style="background: linear-gradient(135deg, #48bb78, #38a169);">MN</div>
-                <div class="post-author-info">
-                    <div class="post-author-name">Mugo Nnedi</div>
-                    <div class="post-author-title">Entrepreneur • Promo 2016</div>
-                    <div class="post-time">
-                        <span>1j</span>
-                        <i class="fas fa-globe-americas"></i>
-                    </div>
-                </div>
-            </div>
-
-            <div class="post-content">
-                <div class="testimonial-badge">
-                    <i class="fas fa-star"></i>
-                    Témoignage
-                </div>
-
-                <h3 style="color: #2d3748; margin-bottom: 16px;">De salarié à entrepreneur : mon aventure 💼</h3>
-
-                <div style="margin: 16px 0; padding: 20px; background: linear-gradient(135deg, rgba(72, 187, 120, 0.1), rgba(56, 161, 105, 0.1)); border-radius: 12px; border-left: 4px solid #48bb78;">
-                    Il y a 3 ans, j'ai quitté mon CDI pour créer ma propre entreprise dans la tech.
-                    Aujourd'hui, nous sommes une équipe de 15 personnes et nous levons notre série A !
-                    <br><br>
-                    <strong>Les défis rencontrés :</strong>
-                    <br>• Gérer l'incertitude financière les premiers mois
-                    <br>• Recruter les bonnes personnes
-                    <br>• Trouver les bons investisseurs
-                    <br><br>
-                    <strong>Le réseau alumni a été crucial</strong> pour mes premiers clients et mes premiers employés !
-                </div>
-
-                <strong>#Témoignage #Entrepreneuriat #Startup #Promo2016 #Success</strong>
-            </div>
-
-            <div class="post-stats">
-                <span>⭐ 28 réactions • 15 commentaires</span>
-                <span>11 partages</span>
-            </div>
-
-            <div class="post-actions">
-                <div class="post-action">
-                    <i class="fas fa-heart"></i>
-                    Inspirer
-                </div>
-                <div class="post-action">
-                    <i class="far fa-comment"></i>
-                    Commenter
-                </div>
-                <div class="post-action">
-                    <i class="fas fa-share"></i>
-                    Partager
-                </div>
-                <div class="post-action">
-                    <i class="fas fa-bookmark"></i>
-                    Sauvegarder
-                </div>
-            </div>
-        </article>
-
-        <!-- Témoignage statique 2 -->
-        <article class="post testimonial-post">
-            <div class="post-header">
-                <div class="post-avatar" style="background: linear-gradient(135deg, #ed8936, #dd6b20);">TD</div>
-                <div class="post-author-info">
-                    <div class="post-author-name">Tsitsi Dangarembga</div>
-                    <div class="post-author-title">Consultante • Promo 2020</div>
-                    <div class="post-time">
-                        <span>3j</span>
-                        <i class="fas fa-globe-americas"></i>
-                    </div>
-                </div>
-            </div>
-
-            <div class="post-content">
-                <div class="testimonial-badge">
-                    <i class="fas fa-star"></i>
-                    Témoignage
-                </div>
-
-                <h3 style="color: #2d3748; margin-bottom: 16px;">Mon premier poste grâce au réseau alumni 🚀</h3>
-
-                <div style="margin: 16px 0; padding: 20px; background: linear-gradient(135deg, rgba(237, 137, 54, 0.1), rgba(221, 107, 32, 0.1)); border-radius: 12px; border-left: 4px solid #ed8936;">
-                    Fraîchement diplômée, j'étais un peu perdue pour mon premier emploi.
-                    Un alumni de la promo 2015 m'a contactée après avoir vu mon profil et m'a proposé un poste dans son équipe.
-                    <br><br>
-                    <strong>Ce que j'ai appris :</strong>
-                    <br>• L'importance du networking dès les études
-                    <br>• Comment bien valoriser ses projets étudiants
-                    <br>• L'entraide entre alumni est réelle !
-                    <br><br>
-                    <strong>Mon conseil :</strong> N'hésitez pas à contacter les anciens, ils sont toujours prêts à aider !
-                </div>
-
-                <strong>#Témoignage #PremierEmploi #Networking #Promo2020 #Merci</strong>
-            </div>
-
-            <div class="post-stats">
-                <span>⭐ 42 réactions • 18 commentaires</span>
-                <span>7 partages</span>
-            </div>
-
-            <div class="post-actions">
-                <div class="post-action">
-                    <i class="fas fa-heart"></i>
-                    Inspirer
-                </div>
-                <div class="post-action">
-                    <i class="far fa-comment"></i>
-                    Commenter
-                </div>
-                <div class="post-action">
-                    <i class="fas fa-share"></i>
-                    Partager
-                </div>
-                <div class="post-action">
-                    <i class="fas fa-bookmark"></i>
-                    Sauvegarder
-                </div>
-            </div>
-        </article>
     </main>
 </div>
 
 @code {
     private TemoignageModel temoignageModel = new();
     private bool isSubmitting = false;
-    private List<TemoignageModel> temoignages = new();
+    private List<TemoignageModel>? temoignages;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        // Données de test
-        temoignages = new List<TemoignageModel>
-        {
-            new() {
-                UserName = "Kintu Kidda",
-                UserTitle = "Développeuse Senior • Promo 2019",
-                Contenu = "Diplômée en 2019, j'ai commencé ma carrière comme développeuse junior dans une startup. Aujourd'hui, je suis Lead Developer dans une scale-up qui cartonne ! Ce qui m'a le plus aidé : Les projets pratiques durant la formation, le réseau alumni pour décrocher mon premier poste, la formation continue et la veille technologique. Mon conseil aux nouveaux diplômés : N'ayez pas peur de prendre des risques et investissez dans votre réseau !",
-                MotsCles = "#Témoignage #Développement #Carrière #Promo2019 #Inspiration",
-                Date = DateTime.Now.AddHours(-2)
-            },
-            new() {
-                UserName = "Mau Mau",
-                UserTitle = "Product Manager • Promo 2018",
-                Contenu = "Après 5 ans dans le développement, j'ai fait une transition vers le Product Management. Ce changement m'a permis d'avoir une vision plus globale des produits tech. Les soft skills développés pendant ma formation m'ont énormément aidé dans cette transition. Le réseau alumni m'a également ouvert des portes pour ce nouveau poste.",
-                MotsCles = "#Témoignage #ProductManagement #TransitionCarrière #Promo2018",
-                Date = DateTime.Now.AddDays(-1)
-            }
-        };
-    }
-
-    private async Task HandleTemoignageSubmit(TemoignageModel model)
-    {
-        isSubmitting = true;
-        StateHasChanged();
-
         try
         {
-            // Ici vous appellerez votre API
-            await Task.Delay(2000); // Simulation
-
-            // Ajouter des données simulées pour l'affichage
-            model.UserName = "Utilisateur Actuel";
-            model.UserTitle = "Alumni • Promo 2023";
-
-            temoignages.Insert(0, model);
-            temoignageModel = new(); // Reset du formulaire
-
-            // Simuler la fermeture du modal via JavaScript
-            await Task.Delay(100);
+            temoignages = await Http.GetFromJsonAsync<List<TemoignageModel>>("/api/temoignages");
         }
-        finally
+        catch (Exception ex)
         {
-            isSubmitting = false;
+            Console.WriteLine($"Erreur lors du chargement des témoignages: {ex.Message}");
+            temoignages = new List<TemoignageModel>();
+        }
+    }
+
+private async Task HandleTemoignageSubmit(TemoignageModel model)
+{
+    if (model != null && !string.IsNullOrWhiteSpace(model.Contenu))
+    {
+        try
+        {
+            // Ajouter le nouveau témoignage à la liste
+            if (temoignages == null)
+            {
+                temoignages = new List<TemoignageModel>();
+            }
+            temoignages.Insert(0, model);
             StateHasChanged();
         }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erreur lors de l'ajout du témoignage: {ex.Message}");
+        }
+    }
+}
+
+
+
+
+    private string FormatDate(DateTime date)
+    {
+        var difference = DateTime.Now - date;
+
+        if (difference.TotalMinutes < 60)
+            return $"{(int)difference.TotalMinutes}min";
+        if (difference.TotalHours < 24)
+            return $"{(int)difference.TotalHours}h";
+        if (difference.TotalDays < 30)
+            return $"{(int)difference.TotalDays}j";
+        return date.ToString("dd MMM yyyy");
+    }
+
+    private string FormatContent(string content)
+    {
+        if (string.IsNullOrEmpty(content)) return "";
+        return content.Replace("\n", "<br>");
     }
 }

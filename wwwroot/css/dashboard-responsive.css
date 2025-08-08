@@ -1,0 +1,74 @@
+@media (max-width: 1200px) {
+    .main-container {
+        grid-template-columns: 1fr;
+        max-width: 600px;
+    }
+
+    .sidebar-left,
+    .sidebar-right {
+        display: none;
+    }
+}
+
+@media (max-width: 900px) {
+    .main-container {
+        flex-direction: column !important;
+        display: flex !important;
+        height: auto !important;
+        padding: 84px 16px 24px;
+        max-width: 100%;
+    }
+    .welcome-card {
+        position: static !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        height: auto !important;
+        margin-bottom: 16px !important;
+    }
+    .main-feed {
+        height: auto !important;
+        overflow-y: visible !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+}
+
+@media (min-width: 901px) {
+    .main-container {
+        display: flex !important;
+        gap: 24px;
+        align-items: flex-start;
+        height: calc(100vh - 84px);
+        min-height: 0;
+    }
+    .welcome-card {
+        position: sticky;
+        top: 84px;
+        min-width: 280px;
+        max-width: 280px;
+        height: 420px;
+        flex-shrink: 0;
+        flex-grow: 0;
+        box-sizing: border-box;
+        overflow: hidden;
+    }
+    .main-feed {
+        flex: 1 1 0%;
+        min-width: 0;
+        max-width: 100%;
+        height: 100%;
+        overflow-y: auto;
+        padding-bottom: 24px;
+    }
+    .main-feed::-webkit-scrollbar {
+        width: 8px;
+    }
+    .main-feed::-webkit-scrollbar-thumb {
+        background: #e2e8f0;
+        border-radius: 8px;
+    }
+    .main-feed::-webkit-scrollbar-track {
+        background: transparent;
+    }
+}

@@ -1,5 +1,9 @@
 @using Microsoft.AspNetCore.Components.Forms
 @using AlumniConnect.Front.Models
+@inject AlumniConnect.Front.Services.AuthService AuthService
+@inject HttpClient Http
+@inject IJSRuntime JSRuntime
+@implements IDisposable
 
 <div class="create-modal-overlay" id="@ModalId">
     <div class="create-modal">
@@ -13,18 +17,7 @@
             </button>
         </div>
         <div class="create-modal-content">
-            <!-- Instructions -->
-            <div style="background: linear-gradient(135deg, rgba(159, 122, 234, 0.1), rgba(102, 126, 234, 0.1)); padding: 20px; border-radius: 12px; border-left: 4px solid #9f7aea; margin-bottom: 24px;">
-                <h4 style="color: #2d3748; margin-bottom: 12px;">💡 Quelques conseils pour un témoignage inspirant :</h4>
-                <ul style="color: #4a5568; margin: 0; padding-left: 20px; font-size: 13px;">
-                    <li>Partagez votre parcours professionnel depuis l'obtention du diplôme</li>
-                    <li>Mentionnez les défis rencontrés et comment vous les avez surmontés</li>
-                    <li>Donnez des conseils aux nouveaux diplômés</li>
-                    <li>N'hésitez pas à mentionner comment le réseau alumni vous a aidé</li>
-                </ul>
-            </div>
-
-            <EditForm Model="@TemoignageModel" OnValidSubmit="@HandleSubmit">
+            <EditForm Model="@localTemoignageModel" OnValidSubmit="@HandleSubmit">
                 <DataAnnotationsValidator />
 
                 <div class="modal-form-group">
@@ -32,34 +25,16 @@
                         <i class="fas fa-star"></i>
                         Votre témoignage *
                     </label>
-                    <InputTextArea @bind-Value="TemoignageModel.Contenu"
+                    <InputTextArea @bind-Value="localTemoignageModel.Contenu"
                                    class="modal-form-textarea"
                                    rows="8"
                                    style="min-height: 180px;"
                                    placeholder="Racontez votre parcours, vos expériences, vos conseils... Soyez authentique et inspirant !" />
-                    <ValidationMessage For="@(() => TemoignageModel.Contenu)" />
-                    <div class="modal-form-help">
-                        <i class="fas fa-info-circle"></i>
-                        Minimum 100 caractères recommandés pour un témoignage impactant
-                    </div>
-                </div>
-
-                <div class="modal-form-group">
-                    <label class="modal-form-label">
-                        <i class="fas fa-tags"></i>
-                        Mots-clés (optionnel)
-                    </label>
-                    <InputText @bind-Value="TemoignageModel.MotsCles"
-                               class="modal-form-input"
-                               placeholder="Ex: #Carrière #Entrepreneuriat #Promo2019 #Inspiration" />
-                    <div class="modal-form-help">
-                        <i class="fas fa-hashtag"></i>
-                        Séparez les mots-clés par des espaces (ex: #Carrière #Tech #Alumni)
-                    </div>
+                    <ValidationMessage For="@(() => localTemoignageModel.Contenu)" />
                 </div>
 
                 <div class="modal-form-actions">
-                    <button type="submit" class="modal-btn-primary" style="background: linear-gradient(135deg, #9f7aea, #805ad5);" disabled="@IsSubmitting">
+                    <button type="submit" class="modal-btn-primary" disabled="@IsSubmitting">
                         @if (IsSubmitting)
                         {
                             <i class="fas fa-spinner fa-spin"></i>
@@ -88,11 +63,72 @@
     [Parameter] public EventCallback<TemoignageModel> OnSubmit { get; set; }
     [Parameter] public bool IsSubmitting { get; set; } = false;
 
+    private TemoignageModel localTemoignageModel = new();
+    private bool hasSubmitted = false;
+
+    protected override void OnInitialized()
+    {
+        localTemoignageModel = new TemoignageModel();
+        hasSubmitted = false;
+    }
+
     private async Task HandleSubmit()
     {
-        if (OnSubmit.HasDelegate)
+        if (hasSubmitted || string.IsNullOrWhiteSpace(localTemoignageModel.Contenu)) return;
+
+        try
         {
-            await OnSubmit.InvokeAsync(TemoignageModel);
+            hasSubmitted = true;
+            var token = await AuthService.GetTokenAsync();
+            if (!string.IsNullOrEmpty(token))
+            {
+                Http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+                var response = await Http.PostAsJsonAsync("http://localhost:5175/api/temoignages", new
+                {
+                    contenu = localTemoignageModel.Contenu
+                });
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var createdTemoignage = await response.Content.ReadFromJsonAsync<TemoignageModel>();
+
+                    // Fermer le modal avant de notifier le parent
+                    await JSRuntime.InvokeVoidAsync("closeModal", ModalId);
+
+                    // Notifier le parent avec le témoignage créé
+                    if (OnSubmit.HasDelegate && createdTemoignage != null)
+                    {
+                        await OnSubmit.InvokeAsync(createdTemoignage);
+                    }
+
+                    // Reset du formulaire
+                    localTemoignageModel = new();
+                    StateHasChanged();
+                }
+                else
+                {
+                    hasSubmitted = false; // Réinitialise le flag en cas d'erreur
+                    var error = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"Erreur lors de la création du témoignage: {error}");
+                }
+            }
+            else
+            {
+                hasSubmitted = false;
+                Console.WriteLine("Token non trouvé - utilisateur non connecté");
+            }
         }
+        catch (Exception ex)
+        {
+            hasSubmitted = false;
+            Console.WriteLine($"Erreur lors de la création du témoignage: {ex.Message}");
+        }
+    }
+
+    public void Dispose()
+    {
+        localTemoignageModel = new();
+        hasSubmitted = false;
     }
 }

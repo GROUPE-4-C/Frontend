@@ -1,0 +1,18 @@
+@media (max-width: 900px) {
+    .temoignages-layout {
+        flex-direction: column;
+        height: auto;
+    }
+    .static-sidebar {
+        position: static;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        height: fit-content;
+        margin-bottom: 16px;
+    }
+    .scrollable-feed {
+        height: auto;
+        overflow-y: visible;
+    }
+}
