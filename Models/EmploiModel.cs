@@ -35,5 +35,8 @@ namespace AlumniConnect.Front.Models
 
         public string? CreatorName { get; set; }
         public string? CreatorEmail { get; set; }
+
+        // Ajout pour le tri par date de création
+        public DateTime CreatedAt { get; set; } = DateTime.Now;
     }
 }
