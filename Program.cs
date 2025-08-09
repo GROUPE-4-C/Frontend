@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using AlumniConnect.Front;
 using AlumniConnect.Front.Services;
+using AlumniConnect.Front.Services.Chat;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -19,5 +20,6 @@ builder.Services.AddScoped(sp => new HttpClient
 // Enregistrement des services
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<PromotionService>();
+builder.Services.AddScoped<ChatService>();
 
 await builder.Build().RunAsync();

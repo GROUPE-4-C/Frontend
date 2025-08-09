@@ -1,0 +1,240 @@
+@using AlumniConnect.Front.Models
+@using AlumniConnect.Front.Models.Chat
+@using AlumniConnect.Front.Services.Chat
+@inject ChatService ChatService
+@inject IJSRuntime JS
+@inject AuthService AuthService
+@implements IAsyncDisposable
+
+<div class="chat-conversation">
+    <div class="chat-header">
+        @if (Contact != null)
+        {
+            <div class="contact-info">
+                <div class="contact-avatar">
+                    @(string.IsNullOrEmpty(Contact.FullName) ? "?" : Contact.FullName[0])
+                </div>
+                <div class="contact-details">
+                    <div class="contact-name">@Contact.FullName</div>
+                    <div class="connection-status @(ChatService.IsConnected ? "connected" : "disconnected")">
+                        @(ChatService.IsConnected ? "Connecté" : "Déconnecté")
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="messages-container" @ref="messagesDiv">
+        @foreach (var message in messages)
+        {
+            <div class="message @(message.SenderId == currentUserId ? "sent" : "received")">
+                <div class="message-content">
+                    <div class="message-header">
+                        <strong>@(message.SenderId == currentUserId ? "Vous" : message.SenderName)</strong>
+                        <span class="message-time">@message.SentAt.ToLocalTime().ToString("HH:mm")</span>
+                    </div>
+                    <div class="message-body">
+                        @message.Content
+                    </div>
+                    <div class="message-footer">
+                        <small class="message-id">ID: @message.Id</small>
+                        @if (message.SenderId == currentUserId)
+                        {
+                            <span class="read-status">@(message.IsRead ? "✓✓" : "✓")</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="message-input">
+        <input type="text"
+               @bind="newMessage"
+               @bind:event="oninput"
+               @onkeypress="HandleKeyPress"
+               placeholder="Écrivez votre message..."
+               class="form-control" />
+        <button class="btn btn-primary" @onclick="SendMessage" disabled="@(!CanSendMessage)">
+            <i class="fas fa-paper-plane"></i>
+        </button>
+    </div>
+
+    <div class="messages-container" @ref="messagesDiv">
+        @if (messages == null)
+        {
+            <div class="text-center p-3">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Chargement...</span>
+                </div>
+            </div>
+        }
+        else if (!messages.Any())
+        {
+            <div class="no-messages">
+                <p>Aucun message. Démarrez la conversation !</p>
+            </div>
+        }
+        else
+        {
+            @foreach (var message in messages)
+            {
+                <div class="message @(message.SenderId == currentUserId ? "sent" : "received")">
+                    <div class="message-content">
+                        @message.Content
+                    </div>
+                    <div class="message-meta">
+                        <span class="message-time">@message.SentAt.ToString("HH:mm")</span>
+                        @if (message.SenderId == currentUserId)
+                        {
+                            <span class="read-status">
+                                @(message.IsRead ? "✓✓" : "✓")
+                            </span>
+                        }
+                    </div>
+                </div>
+            }
+        }
+    </div>
+
+    <div class="message-input">
+        <input type="text"
+               @bind="newMessage"
+               @bind:event="oninput"
+               @onkeypress="HandleKeyPress"
+               placeholder="Écrivez votre message..."
+               class="form-control" />
+        <button class="btn btn-primary" @onclick="SendMessage" disabled="@(!CanSendMessage)">
+            <i class="fas fa-paper-plane"></i>
+        </button>
+    </div>
+</div>
+
+@code {
+    private ElementReference messagesDiv;
+    private string newMessage = "";
+    private List<ChatMessage> messages = new();
+    private bool CanSendMessage => !string.IsNullOrWhiteSpace(newMessage) && Contact != null && ChatService.IsConnected;
+    private string currentUserId = "";
+
+    [Parameter]
+    public UserInfo? Contact { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user = await AuthService.GetCurrentUserAsync();
+        if (user != null)
+        {
+            currentUserId = user.Id;
+            await InitializeChat();
+        }
+    }
+
+    private async Task InitializeChat()
+    {
+        try
+        {
+            if (!ChatService.IsConnected)
+            {
+                await ChatService.StartConnection();
+            }
+
+            ChatService.OnMessageReceived += HandleNewMessage;
+            ChatService.OnMessageRead += HandleMessageRead;
+
+            // Charger les messages précédents si nécessaire
+            // await LoadPreviousMessages();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error initializing chat: {ex.Message}");
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await ScrollToBottom();
+        }
+    }
+
+    private async Task HandleKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && CanSendMessage)
+        {
+            await SendMessage();
+        }
+    }
+
+    private void HandleNewMessage(ChatMessage message)
+    {
+        // Vérifier si le message appartient à cette conversation
+        if ((message.SenderId == currentUserId && message.ReceiverId == Contact?.Id) ||
+            (message.SenderId == Contact?.Id && message.ReceiverId == currentUserId))
+        {
+            messages.Add(message);
+            InvokeAsync(async () =>
+            {
+                StateHasChanged();
+                await ScrollToBottom();
+            });
+        }
+    }
+
+    private void HandleMessageRead(string messageId)
+    {
+        var message = messages.FirstOrDefault(m => m.Id == messageId);
+        if (message != null)
+        {
+            message.IsRead = true;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SendMessage()
+    {
+        if (!CanSendMessage) return;
+
+        try
+        {
+            await ChatService.SendMessage(Contact!.Id, newMessage);
+            newMessage = "";
+            await ScrollToBottom();
+        }
+        catch (Exception ex)
+        {
+            // Gérer l'erreur (par exemple, afficher une notification)
+            Console.Error.WriteLine($"Erreur lors de l'envoi du message : {ex.Message}");
+        }
+    }
+
+    private async Task ScrollToBottom()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("scrollToBottom", messagesDiv);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Erreur lors du défilement : {ex.Message}");
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            if (ChatService != null)
+            {
+                ChatService.OnMessageReceived -= HandleNewMessage;
+                ChatService.OnMessageRead -= HandleMessageRead;
+                await ChatService.DisposeAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error disposing chat: {ex.Message}");
+        }
+    }
+}

@@ -1,0 +1,83 @@
+@using AlumniConnect.Front.Models
+@inject AuthService AuthService
+
+<div class="chat-contacts">
+    <div class="search-box">
+        <input type="text" @bind="searchText" @bind:event="oninput"
+               placeholder="Rechercher un contact..." class="form-control" />
+    </div>
+
+    <div class="contacts-list">
+        @if (filteredContacts != null)
+        {
+            @foreach (var contact in filteredContacts)
+            {
+                <div class="contact-item @(selectedContactId == contact.Id ? "selected" : "")"
+                     @onclick="() => HandleContactSelection(contact)">
+                    <div class="contact-avatar">
+                        @(string.IsNullOrEmpty(contact.FullName) ? "?" : contact.FullName[0])
+                    </div>
+                    <div class="contact-info">
+                        <div class="contact-name">@contact.FullName</div>
+                        <div class="contact-status">
+                            <span class="status-dot offline"></span>
+                            Hors ligne
+                        </div>
+                    </div>
+                    @if (unreadMessageCounts.ContainsKey(contact.Id) && unreadMessageCounts[contact.Id] > 0)
+                    {
+                        <div class="unread-badge">
+                            @unreadMessageCounts[contact.Id]
+                        </div>
+                    }
+                </div>
+            }
+        }
+        else
+        {
+            <div class="text-center p-3">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Chargement...</span>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private string searchText = "";
+    private string? selectedContactId;
+    private Dictionary<string, int> unreadMessageCounts = new();
+
+    [Parameter]
+    public List<UserInfo> Contacts { get; set; } = new();
+
+    [Parameter]
+    public EventCallback<UserInfo> OnContactSelected { get; set; }
+
+    [Parameter]
+    public Dictionary<string, int>? UnreadCounts
+    {
+        get => unreadMessageCounts;
+        set
+        {
+            if (value != null)
+            {
+                unreadMessageCounts = value;
+                StateHasChanged();
+            }
+        }
+    }
+
+    private IEnumerable<UserInfo> filteredContacts => Contacts
+        .Where(c => string.IsNullOrEmpty(searchText) ||
+                    (c.FullName?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false))
+        .OrderByDescending(c => unreadMessageCounts.GetValueOrDefault(c.Id))
+        .ThenBy(c => c.FullName);
+
+    private async Task HandleContactSelection(UserInfo contact)
+    {
+        selectedContactId = contact.Id;
+        await OnContactSelected.InvokeAsync(contact);
+    }
+}

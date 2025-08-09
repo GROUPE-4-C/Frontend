@@ -1,0 +1,116 @@
+@page "/chat"
+@using AlumniConnect.Front.Services.Chat
+@using AlumniConnect.Front.Components.Chat
+@using AlumniConnect.Front.Models
+@inject ChatService ChatService
+@inject AuthService AuthService
+@inject NavigationManager NavigationManager
+
+<div class="chat-page">
+    @if (!isAuthenticated)
+    {
+        <div class="alert alert-warning">
+            <p>Vous devez être connecté pour accéder au chat.</p>
+            <button class="btn btn-primary" @onclick="RedirectToLogin">Se connecter</button>
+        </div>
+    }
+    else
+    {
+        <div class="chat-container">
+            <ChatContactList
+                Contacts="@contacts"
+                UnreadCounts="@unreadMessageCounts"
+                OnContactSelected="@HandleContactSelected" />
+
+            @if (selectedContact != null)
+            {
+                <ChatConversation
+                    Contact="@selectedContact"
+                    CurrentUserId="@currentUserId" />
+            }
+            else
+            {
+                <div class="no-chat-selected">
+                    <div class="content">
+                        <i class="fas fa-comments fa-3x mb-3"></i>
+                        <h3>Bienvenue dans le chat AlumniConnect</h3>
+                        <p>Sélectionnez un contact pour démarrer une conversation</p>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private bool isAuthenticated;
+    private List<UserInfo> contacts = new();
+    private UserInfo? selectedContact;
+    private string currentUserId = "";
+    private Dictionary<string, int> unreadMessageCounts = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user = await AuthService.GetCurrentUserAsync();
+        isAuthenticated = user != null;
+
+        if (isAuthenticated && user != null)
+        {
+            currentUserId = user.Id;
+            await LoadContacts();
+            await InitializeChat();
+        }
+    }
+
+    private async Task LoadContacts()
+    {
+        try
+        {
+            // TODO: Implémenter l'appel API pour charger les contacts
+            // contacts = await contactService.GetContacts();
+
+            // Pour le moment, on utilise des données de test
+            contacts = new List<UserInfo>
+            {
+                new UserInfo { Id = "1", FullName = "Jean Dupont" },
+                new UserInfo { Id = "2", FullName = "Marie Martin" },
+                new UserInfo { Id = "3", FullName = "Pierre Durant" }
+            };
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Erreur lors du chargement des contacts : {ex.Message}");
+            // TODO: Afficher une notification d'erreur
+        }
+    }
+
+    private async Task InitializeChat()
+    {
+        try
+        {
+            await ChatService.StartConnection();
+            // Autres initialisations si nécessaire
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Erreur lors de l'initialisation du chat : {ex.Message}");
+            // TODO: Afficher une notification d'erreur
+        }
+    }
+
+    private void HandleContactSelected(UserInfo contact)
+    {
+        selectedContact = contact;
+        // Réinitialiser le compteur de messages non lus pour ce contact
+        if (unreadMessageCounts.ContainsKey(contact.Id))
+        {
+            unreadMessageCounts[contact.Id] = 0;
+            StateHasChanged();
+        }
+    }
+
+    private void RedirectToLogin()
+    {
+        NavigationManager.NavigateTo("/login");
+    }
+}
