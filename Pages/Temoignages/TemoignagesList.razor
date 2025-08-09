@@ -22,6 +22,18 @@
 <link href="css/modal-forms.css" rel="stylesheet" />
 <link href="css/temoignages.css" rel="stylesheet" />
 
+<style>
+    .testimonial-post {
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .testimonial-post:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+</style>
+
 <script src="js/modals.js"></script>
 <script src="js/temoignages.js"></script>
 
@@ -100,7 +112,7 @@
         {
             @foreach (var temoignage in temoignages.OrderByDescending(t => t.Date))
             {
-                <article class="post testimonial-post">
+                <article class="post testimonial-post" @onclick="() => NavigateToProfile(temoignage.UserId)">
                     <div class="post-header">
                         <div class="post-avatar" style="background: linear-gradient(135deg, #9f7aea, #805ad5);">
                             @if (!string.IsNullOrEmpty(temoignage.PhotoUrl))
@@ -185,6 +197,11 @@
     private string? activeDropdownId;
     private UserInfo? currentUser;
     private string? errorMessage;
+
+    private void NavigateToProfile(string userId)
+    {
+        NavigationManager.NavigateTo($"/alumni/{userId}");
+    }
 
     protected override async Task OnInitializedAsync()
     {
