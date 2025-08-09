@@ -1,0 +1,443 @@
+@page "/admin/dashboard"
+@using System.Net.Http.Headers
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+
+<link href="css/admin.css" rel="stylesheet" />
+
+@if (!isAuthenticated)
+{
+    <div class="admin-container">
+        <div class="admin-login-card">
+            <h2>Accès administrateur</h2>
+            <p>Veuillez vous connecter pour accéder au tableau de bord.</p>
+            <button class="admin-btn btn-primary" @onclick="RedirectToLogin">
+                <i class="fas fa-sign-in-alt"></i>
+                Se connecter
+            </button>
+        </div>
+    </div>
+}
+else
+{
+    <div class="admin-container">
+        <div class="admin-header">
+            <div class="admin-title">
+                <i class="fas fa-shield-alt"></i>
+                <span>Dashboard Administrateur</span>
+            </div>
+            <button class="admin-btn btn-secondary" @onclick="Logout">
+                <i class="fas fa-sign-out-alt"></i>
+                Déconnexion
+            </button>
+        </div>
+
+        <div class="admin-content">
+            <!-- Sidebar -->
+            <div class="admin-sidebar">
+                <div class="admin-nav">
+                    <div class="admin-nav-item @(currentSection == "promotions" ? "active" : "")"
+                         @onclick='() => SwitchSection("promotions")'>
+                        <i class="fas fa-graduation-cap"></i>
+                        Promotions
+                    </div>
+                    <div class="admin-nav-item @(currentSection == "alumni" ? "active" : "")"
+                         @onclick='() => SwitchSection("alumni")'>
+                        <i class="fas fa-users"></i>
+                        Alumni
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="admin-main">
+                @if (currentSection == "promotions")
+                {
+                    <div class="admin-card">
+                        <div class="card-header">
+                            <h3 class="card-title">Gestion des Promotions</h3>
+                            <button class="admin-btn btn-primary" @onclick="ShowAddPromotionForm">
+                                <i class="fas fa-plus"></i>
+                                Nouvelle Promotion
+                            </button>
+                        </div>
+
+                        @if (showForm)
+                        {
+                            <div class="admin-form">
+                                <EditForm Model="@promotionModel" OnValidSubmit="HandlePromotionSubmit">
+                                    <DataAnnotationsValidator />
+                                    <ValidationSummary />
+
+                                    <div class="form-group">
+                                        <label class="form-label">Nom de la promotion</label>
+                                        <InputText @bind-Value="promotionModel.Nom" class="form-input" />
+                                    </div>
+
+                                    <div class="action-buttons">
+                                        <button type="submit" class="admin-btn btn-primary">
+                                            @(isEditMode ? "Mettre à jour" : "Ajouter")
+                                        </button>
+                                        <button type="button" class="admin-btn btn-secondary" @onclick="CancelEdit">
+                                            Annuler
+                                        </button>
+                                    </div>
+                                </EditForm>
+                            </div>
+                        }
+
+                        @if (errorMessage != null)
+                        {
+                            <div class="alert alert-danger">@errorMessage</div>
+                        }
+
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nom</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (promotions != null)
+                                {
+                                    @foreach (var promo in promotions)
+                                    {
+                                        <tr>
+                                            <td>@promo.Id</td>
+                                            <td>@promo.Nom</td>
+                                            <td>
+                                                <div class="action-buttons">
+                                                    <button class="btn-edit" @onclick="() => EditPromotion(promo)">
+                                                        <i class="fas fa-edit"></i>
+                                                        Modifier
+                                                    </button>
+                                                    <button class="btn-delete" @onclick="() => DeletePromotion(promo.Id)">
+                                                        <i class="fas fa-trash"></i>
+                                                        Supprimer
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else if (currentSection == "alumni")
+                {
+                    <div class="admin-card">
+                        <div class="card-header">
+                            <h3 class="card-title">Liste des Alumni</h3>
+                            <div class="header-actions">
+                                <div class="search-box">
+                                    <i class="fas fa-search"></i>
+                                    <input type="text"
+                                           placeholder="Rechercher un alumni..."
+                                           @bind-value="searchTerm"
+                                           @bind-value:event="oninput"
+                                           @onkeyup="FilterAlumni" />
+                                </div>
+                            </div>
+                        </div>
+
+                        @if (alumni == null)
+                        {
+                            <div class="loading-indicator">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <span>Chargement des alumni...</span>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Alumni</th>
+                                            <th>Email</th>
+                                            <th>Profession</th>
+                                            <th>Promotion</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var user in filteredAlumni)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <div class="user-info">
+                                                        <div class="user-avatar-placeholder">
+                                                            @GetInitials(user.FullName)
+                                                        </div>
+                                                        <span class="user-name">@user.FullName</span>
+                                                    </div>
+                                                </td>
+                                                <td>@user.Email</td>
+                                                <td>@user.Profession</td>
+                                                <td>@user.Promotion</td>
+                                                <td>
+                                                    <div class="action-buttons">
+                                                        <button class="btn-view" @onclick="() => ViewProfile(user.Id)">
+                                                            <i class="fas fa-eye"></i>
+                                                            Voir profil
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool isAuthenticated = false;
+    private List<PromotionDto> promotions;
+    private List<AlumniDto> alumni;
+    private List<AlumniDto> filteredAlumni;
+    private PromotionDto promotionModel = new();
+    private bool showForm = false;
+    private bool isEditMode = false;
+    private string errorMessage;
+    private string token;
+    private string currentSection = "promotions";
+    private string searchTerm = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var storedToken = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "adminToken");
+        if (!string.IsNullOrEmpty(storedToken))
+        {
+            token = storedToken;
+            isAuthenticated = true;
+            await LoadPromotions();
+            await LoadAlumni();
+        }
+    }
+
+    private string GetInitials(string fullName)
+    {
+        if (string.IsNullOrEmpty(fullName)) return "?";
+
+        var nameParts = fullName.Split(' ');
+        if (nameParts.Length > 1)
+        {
+            return (nameParts[0][0].ToString() + nameParts[1][0].ToString()).ToUpper();
+        }
+        return fullName[0].ToString().ToUpper();
+    }
+
+    private void SwitchSection(string section)
+    {
+        currentSection = section;
+        if (section == "alumni" && alumni == null)
+        {
+            LoadAlumni();
+        }
+    }
+
+    private async Task LoadPromotions()
+    {
+        try
+        {
+            var request = new HttpRequestMessage(HttpMethod.Get, "http://localhost:5175/api/promotions");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var response = await Http.SendAsync(request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                promotions = await response.Content.ReadFromJsonAsync<List<PromotionDto>>();
+                errorMessage = null;
+            }
+            else
+            {
+                errorMessage = "Erreur lors du chargement des promotions.";
+                promotions = new List<PromotionDto>();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Erreur : {ex.Message}";
+            promotions = new List<PromotionDto>();
+        }
+    }
+
+    private async Task LoadAlumni()
+    {
+        try
+        {
+            var request = new HttpRequestMessage(HttpMethod.Get, "http://localhost:5175/api/alumni/all");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var response = await Http.SendAsync(request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                alumni = await response.Content.ReadFromJsonAsync<List<AlumniDto>>();
+                filteredAlumni = alumni;
+                errorMessage = null;
+            }
+            else
+            {
+                errorMessage = "Erreur lors du chargement des alumni.";
+                alumni = new List<AlumniDto>();
+                filteredAlumni = alumni;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Erreur : {ex.Message}";
+            alumni = new List<AlumniDto>();
+            filteredAlumni = alumni;
+        }
+    }
+
+    private void FilterAlumni()
+    {
+        if (string.IsNullOrWhiteSpace(searchTerm))
+        {
+            filteredAlumni = alumni;
+        }
+        else
+        {
+            filteredAlumni = alumni
+                .Where(a =>
+                    a.FullName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                    a.Email.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                    a.Profession.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                    a.Promotion.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+    }
+
+    private void ViewProfile(string id)
+    {
+        NavigationManager.NavigateTo($"/alumni/{id}");
+    }
+
+    private void ShowAddPromotionForm()
+    {
+        promotionModel = new PromotionDto();
+        showForm = true;
+        isEditMode = false;
+    }
+
+    private void EditPromotion(PromotionDto promo)
+    {
+        promotionModel = new PromotionDto { Id = promo.Id, Nom = promo.Nom };
+        showForm = true;
+        isEditMode = true;
+    }
+
+    private void CancelEdit()
+    {
+        showForm = false;
+        promotionModel = new PromotionDto();
+        errorMessage = null;
+    }
+
+    private async Task HandlePromotionSubmit()
+    {
+        try
+        {
+            HttpResponseMessage response;
+            if (isEditMode)
+            {
+                var request = new HttpRequestMessage(HttpMethod.Put, $"http://localhost:5175/api/promotions/{promotionModel.Id}");
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                request.Content = JsonContent.Create(new { nom = promotionModel.Nom });
+                response = await Http.SendAsync(request);
+            }
+            else
+            {
+                var request = new HttpRequestMessage(HttpMethod.Post, "http://localhost:5175/api/promotions");
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                request.Content = JsonContent.Create(new { nom = promotionModel.Nom });
+                response = await Http.SendAsync(request);
+            }
+
+            if (response.IsSuccessStatusCode)
+            {
+                await LoadPromotions();
+                showForm = false;
+                promotionModel = new PromotionDto();
+                errorMessage = null;
+            }
+            else
+            {
+                errorMessage = "Erreur lors de l'opération.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Erreur : {ex.Message}";
+        }
+    }
+
+    private async Task DeletePromotion(int id)
+    {
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Voulez-vous vraiment supprimer cette promotion ?");
+        if (!confirmed) return;
+
+        try
+        {
+            var request = new HttpRequestMessage(HttpMethod.Delete, $"http://localhost:5175/api/promotions/{id}");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var response = await Http.SendAsync(request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                await LoadPromotions();
+                errorMessage = null;
+            }
+            else
+            {
+                errorMessage = "Erreur lors de la suppression.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Erreur : {ex.Message}";
+        }
+    }
+
+    private void RedirectToLogin()
+    {
+        NavigationManager.NavigateTo("/admin/login");
+    }
+
+    private async Task Logout()
+    {
+        await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "adminToken");
+        isAuthenticated = false;
+        token = null;
+        NavigationManager.NavigateTo("/admin/login");
+    }
+
+    public class PromotionDto
+    {
+        public int Id { get; set; }
+        public string Nom { get; set; }
+    }
+
+    public class AlumniDto
+    {
+        public string Id { get; set; }
+        public string FullName { get; set; }
+        public string Email { get; set; }
+        public string Profession { get; set; }
+        public string Bio { get; set; }
+        public string PhotoUrl { get; set; }
+        public string Promotion { get; set; }
+    }
+}

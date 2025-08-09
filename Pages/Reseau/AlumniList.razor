@@ -1,6 +1,7 @@
 @using AlumniConnect.Front.Models
 @inject HttpClient Http
 @inject NavigationManager Navigation
+@inject PromotionService PromotionService
 @page "/alumni"
 @layout MainLayout
 @using System.Net.Http.Json
@@ -33,6 +34,39 @@
         padding: 2rem;
         border-radius: 12px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .filter-section {
+        margin-top: 1.5rem;
+    }
+
+    .filter-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: #4a5568;
+        font-weight: 500;
+    }
+
+    .filter-select {
+        width: 100%;
+        padding: 0.5rem;
+        margin-bottom: 1rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.375rem;
+        background-color: white;
+        color: #4a5568;
+        font-size: 0.875rem;
+        transition: all 0.2s;
+    }
+
+    .filter-select:hover {
+        border-color: #cbd5e0;
+    }
+
+    .filter-select:focus {
+        outline: none;
+        border-color: #48bb78;
+        box-shadow: 0 0 0 3px rgba(72, 187, 120, 0.2);
     }
 
     .main-content {
@@ -78,6 +112,36 @@
                        class="search-input-d"
                        @bind="search"
                        placeholder="Nom, profession..." />
+            </div>
+
+            <div class="filter-section">
+                <label class="filter-label">🎓 Promotion</label>
+                <select class="filter-select" @bind="selectedPromotion">
+                    <option value="">Toutes les promotions</option>
+                    @if (isLoadingPromotions)
+                    {
+                        <option disabled>Chargement des promotions...</option>
+                    }
+                    else if (promotions != null)
+                    {
+                        @foreach (var promo in promotions.OrderByDescending(p => p.Nom))
+                        {
+                            <option value="@promo.Nom">@promo.Nom</option>
+                        }
+                    }
+                </select>
+
+                <label class="filter-label">💼 Domaine</label>
+                <select class="filter-select" @bind="selectedDomain">
+                    <option value="">Tous les domaines</option>
+                    @if (domaines != null)
+                    {
+                        @foreach (var domaine in domaines.OrderBy(d => d))
+                        {
+                            <option value="@domaine">@domaine</option>
+                        }
+                    }
+                </select>
             </div>
 
             @if (alumniList != null)
@@ -151,7 +215,12 @@
                                 <div class="alumni-info">
                                     <h3>@alumni.FullName</h3>
                                     <div class="alumni-profession">@alumni.Profession</div>
-                                    <span class="alumni-promotion">Promotion @alumni.Promotion</span>
+                                    <span class="alumni-promotion">
+                                        @{
+                                            var promotionName = promotions?.FirstOrDefault(p => p.Id.ToString() == alumni.Promotion)?.Nom ?? alumni.Promotion;
+                                        }
+                                        Promotion @promotionName
+                                    </span>
                                 </div>
                             </div>
 
@@ -175,12 +244,24 @@
 @code {
     private List<AlumniModel>? alumniList;
     private string search = "";
+    private string selectedPromotion = "";
+    private string selectedDomain = "";
+    private List<PromotionModel>? promotions;
+    private HashSet<string>? domaines;
+    private bool isLoadingPromotions = true;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
             alumniList = await Http.GetFromJsonAsync<List<AlumniModel>>("/api/alumni/all") ?? new List<AlumniModel>();
+            Console.WriteLine($"Nombre d'alumni chargés : {alumniList.Count}");
+            foreach (var alumni in alumniList)
+            {
+                Console.WriteLine($"Alumni: {alumni.FullName}, Promotion: {alumni.Promotion}, Profession: {alumni.Profession}");
+            }
+            await LoadPromotions();
+            domaines = new HashSet<string>(alumniList.Select(a => a.Profession).Where(d => !string.IsNullOrEmpty(d)));
         }
         catch (Exception ex)
         {
@@ -189,13 +270,26 @@
         }
     }
 
-    private IEnumerable<AlumniModel> alumniListFiltered =>
-        string.IsNullOrWhiteSpace(search)
-            ? alumniList ?? Enumerable.Empty<AlumniModel>()
-            : alumniList?.Where(a =>
-                (a.FullName ?? "").Contains(search, StringComparison.OrdinalIgnoreCase) ||
-                (a.Profession ?? "").Contains(search, StringComparison.OrdinalIgnoreCase)
+    private IEnumerable<AlumniModel> alumniListFiltered
+    {
+        get
+        {
+            var filtered = alumniList?.Where(a =>
+                (string.IsNullOrWhiteSpace(search) ||
+                 (a.FullName ?? "").Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                 (a.Profession ?? "").Contains(search, StringComparison.OrdinalIgnoreCase)) &&
+                (string.IsNullOrWhiteSpace(selectedPromotion) ||
+                 (a.Promotion ?? "").Equals(selectedPromotion, StringComparison.OrdinalIgnoreCase)) &&
+                (string.IsNullOrWhiteSpace(selectedDomain) ||
+                 (a.Profession ?? "").Equals(selectedDomain, StringComparison.OrdinalIgnoreCase))
             ) ?? Enumerable.Empty<AlumniModel>();
+
+            Console.WriteLine($"Filtrage - Promotion sélectionnée: {selectedPromotion}");
+            Console.WriteLine($"Filtrage - Domaine sélectionné: {selectedDomain}");
+            Console.WriteLine($"Nombre d'alumni après filtrage : {filtered.Count()}");
+            return filtered;
+        }
+    }
 
     private string GetFullPhotoUrl(string? photoUrl)
     {
@@ -214,5 +308,25 @@
     {
         if (!string.IsNullOrWhiteSpace(id))
             Navigation.NavigateTo($"/alumni/{id}");
+    }
+
+    private async Task LoadPromotions()
+    {
+        isLoadingPromotions = true;
+        StateHasChanged();
+        try
+        {
+            promotions = await PromotionService.GetAllPromotionsAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erreur lors du chargement des promotions: {ex.Message}");
+            promotions = new List<PromotionModel>();
+        }
+        finally
+        {
+            isLoadingPromotions = false;
+            StateHasChanged();
+        }
     }
 }

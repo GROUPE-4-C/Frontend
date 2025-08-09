@@ -1,0 +1,253 @@
+@page "/admin/alumni"
+@using System.Net.Http.Headers
+@using System.Net.Http.Json
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+
+<div class="admin-container">
+    <div class="admin-header">
+        <div class="admin-title">
+            <i class="fas fa-users"></i>
+            <span>Gestion des Alumni</span>
+        </div>
+    </div>
+
+    <div class="admin-content">
+        <!-- Sidebar -->
+        <div class="admin-sidebar">
+            <div class="admin-nav">
+                <a href="/admin/dashboard" class="admin-nav-item">
+                    <i class="fas fa-graduation-cap"></i>
+                    Promotions
+                </a>
+                <a href="/admin/alumni" class="admin-nav-item active">
+                    <i class="fas fa-users"></i>
+                    Alumni
+                </a>
+                <a href="#evenements" class="admin-nav-item">
+                    <i class="fas fa-calendar-alt"></i>
+                    Événements
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="admin-main">
+            <div class="admin-card">
+                <div class="card-header">
+                    <h3 class="card-title">Liste des Alumni</h3>
+                    <div class="header-actions">
+                        <div class="search-box">
+                            <i class="fas fa-search"></i>
+                            <input type="text"
+                                   placeholder="Rechercher un alumni..."
+                                   @bind-value="searchTerm"
+                                   @bind-value:event="oninput"
+                                   @onkeyup="FilterAlumni" />
+                        </div>
+                    </div>
+                </div>
+
+                @if (errorMessage != null)
+                {
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle"></i>
+                        @errorMessage
+                    </div>
+                }
+
+                @if (alumni == null)
+                {
+                    <div class="loading-indicator">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <span>Chargement des alumni...</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="alumni-stats">
+                        <div class="stat-card">
+                            <i class="fas fa-users"></i>
+                            <div class="stat-content">
+                                <span class="stat-number">@alumni.Count</span>
+                                <span class="stat-label">Alumni Total</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Nom</th>
+                                    <th>Email</th>
+                                    <th>Promotion</th>
+                                    <th>Statut</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var user in filteredAlumni)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="user-info">
+                                                @if (!string.IsNullOrEmpty(user.PhotoUrl))
+                                                {
+                                                    <img src="@user.PhotoUrl" alt="@user.FullName" class="user-avatar" />
+                                                }
+                                                else
+                                                {
+                                                    <div class="user-avatar-placeholder">
+                                                        @user.FullName.Substring(0, 1)
+                                                    </div>
+                                                }
+                                                <span>@user.FullName</span>
+                                            </div>
+                                        </td>
+                                        <td>@user.Email</td>
+                                        <td>@(user.Promotion?.Nom ?? "Non assigné")</td>
+                                        <td>
+                                            <span class="status-badge @(user.IsActive ? "active" : "inactive")">
+                                                @(user.IsActive ? "Actif" : "Inactif")
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <button class="btn-view" @onclick="() => ViewProfile(user.Id)">
+                                                    <i class="fas fa-eye"></i>
+                                                    Voir
+                                                </button>
+                                                <button class="btn-edit" @onclick="() => UpdateStatus(user.Id, !user.IsActive)">
+                                                    <i class="fas @(user.IsActive ? "fa-ban" : "fa-check")"></i>
+                                                    @(user.IsActive ? "Désactiver" : "Activer")
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<AlumniDto> alumni;
+    private List<AlumniDto> filteredAlumni;
+    private string errorMessage;
+    private string searchTerm = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAlumni();
+    }
+
+    private async Task LoadAlumni()
+    {
+        try
+        {
+            var token = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "adminToken");
+            if (string.IsNullOrEmpty(token))
+            {
+                NavigationManager.NavigateTo("/admin/login");
+                return;
+            }
+
+            var request = new HttpRequestMessage(HttpMethod.Get, "http://localhost:5175/api/alumni/all");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var response = await Http.SendAsync(request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                alumni = await response.Content.ReadFromJsonAsync<List<AlumniDto>>();
+                filteredAlumni = alumni;
+                errorMessage = null;
+            }
+            else
+            {
+                errorMessage = "Erreur lors du chargement des alumni.";
+                alumni = new List<AlumniDto>();
+                filteredAlumni = alumni;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Erreur : {ex.Message}";
+            alumni = new List<AlumniDto>();
+            filteredAlumni = alumni;
+        }
+    }
+
+    private void FilterAlumni()
+    {
+        if (string.IsNullOrWhiteSpace(searchTerm))
+        {
+            filteredAlumni = alumni;
+        }
+        else
+        {
+            filteredAlumni = alumni
+                .Where(a =>
+                    a.FullName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                    a.Email.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                    (a.Promotion?.Nom?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ?? false))
+                .ToList();
+        }
+    }
+
+    private void ViewProfile(int id)
+    {
+        NavigationManager.NavigateTo($"/profile/{id}");
+    }
+
+    private async Task UpdateStatus(int id, bool newStatus)
+    {
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm",
+            $"Voulez-vous vraiment {(newStatus ? "activer" : "désactiver")} cet alumni ?");
+
+        if (!confirmed) return;
+
+        try
+        {
+            var token = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "adminToken");
+            var request = new HttpRequestMessage(HttpMethod.Put, $"http://localhost:5175/api/alumni/{id}/status");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            request.Content = JsonContent.Create(new { isActive = newStatus });
+
+            var response = await Http.SendAsync(request);
+            if (response.IsSuccessStatusCode)
+            {
+                await LoadAlumni();
+            }
+            else
+            {
+                errorMessage = "Erreur lors de la mise à jour du statut.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Erreur : {ex.Message}";
+        }
+    }
+
+    public class AlumniDto
+    {
+        public int Id { get; set; }
+        public string FullName { get; set; }
+        public string Email { get; set; }
+        public string PhotoUrl { get; set; }
+        public bool IsActive { get; set; }
+        public PromotionDto Promotion { get; set; }
+    }
+
+    public class PromotionDto
+    {
+        public int Id { get; set; }
+        public string Nom { get; set; }
+    }
+}
