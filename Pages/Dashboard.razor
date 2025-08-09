@@ -4,6 +4,7 @@
 @using AlumniConnect.Front.Utils
 @inject HttpClient Http
 @inject Microsoft.AspNetCore.Components.NavigationManager NavigationManager
+@inject AlumniConnect.Front.Services.AuthService AuthService
 
 <link href="css/shared-navbar.css" rel="stylesheet" />
 
@@ -19,19 +20,22 @@
     <aside class="welcome-card">
         <h3>👋 Bienvenue sur AlumniConnect</h3>
         <p>Découvrez notre communauté d'alumni, parcourez les témoignages et les opportunités professionnelles.</p>
-        <a href="/Login" class="login-cta">
-            <i class="fas fa-user-plus"></i>
-            Rejoindre la communauté
-        </a>
+        @if (currentUser == null)
+        {
+            <a href="/Login" class="login-cta">
+                <i class="fas fa-user-plus"></i>
+                Rejoindre la communauté
+            </a>
+        }
     </aside>
 
     <!-- Main Feed -->
     <main class="main-feed">
-        <!-- Disabled Post Composer -->
-        <div class="post-composer disabled">
+        <!-- Post Composer -->
+        <div class="post-composer @(currentUser == null ? "disabled" : "")">
             <div class="composer-input">
-                <div class="composer-avatar">?</div>
-                <input type="text" placeholder="Partagez vos dernières nouvelles avec le réseau..." disabled>
+                <div class="composer-avatar">@((currentUser != null && !string.IsNullOrEmpty(currentUser.FullName)) ? currentUser.FullName.Substring(0, 1) : "?")</div>
+                <input type="text" placeholder="Partagez vos dernières nouvelles avec le réseau..." @(currentUser == null ? "disabled" : null)>
             </div>
 
             <div class="composer-actions">
@@ -148,18 +152,18 @@
 
 @code {
     private List<TemoignageModel>? temoignages;
+    private AlumniConnect.Front.Models.UserInfo? currentUser;
 
     private void NavigateToProfile(string userId)
     {
         NavigationManager.NavigateTo($"/alumni/{userId}");
     }
 
-
-
     protected override async Task OnInitializedAsync()
     {
         try
         {
+            currentUser = await AuthService.GetCurrentUserAsync();
             temoignages = await Http.GetFromJsonAsync<List<TemoignageModel>>("/api/temoignages");
         }
         catch (Exception ex)

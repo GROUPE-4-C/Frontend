@@ -16,6 +16,8 @@
 @inject ILogger<TemoignagesList> Logger
 @implements IDisposable
 
+
+
 <link href="css/shared-navbar.css" rel="stylesheet" />
 <link href="css/body-layout.css" rel="stylesheet" />
 <link href="css/dashboard.css" rel="stylesheet" />
@@ -58,7 +60,11 @@
     <aside class="welcome-card static-sidebar">
         <h3>⭐ Témoignages Alumni</h3>
         <p>Partagez votre expérience et découvrez les parcours inspirants de notre communauté d'alumni.</p>
-        <button class="login-cta" onclick="openModal('createTemoignageModal')">
+        <button class="login-cta @(currentUser == null ? "disabled-btn" : "")" onclick="@(currentUser != null ? "openModal('createTemoignageModal')" : null)" disabled="@(currentUser == null)">
+            @if (currentUser == null)
+            {
+                <i class="fas fa-lock"></i>
+            }
             <i class="fas fa-plus"></i>
             Rédiger un témoignage
         </button>
@@ -128,8 +134,8 @@
                             <div class="post-author-name">@temoignage.FullName</div>
                             <div class="post-author-title">@temoignage.Profession • @temoignage.Promotion</div>
                             <div class="post-time">
-                                <span>@FormatDate(temoignage.Date)</span>
-                                <i class="fas fa-globe-americas"></i>
+                                <i class="fas fa-clock"></i>
+                                <span>@temoignage.Date.ToString("dd MMMM yyyy")</span>
                             </div>
                         </div>
                         @if (currentUser != null && currentUser.Id == temoignage.UserId)
@@ -144,7 +150,7 @@
                                     </button>
                                     @if (activeDropdownId == temoignage.Id)
                                     {
-                                        <div class="dropdown-menu show" @onclick:stopPropagation data-id="@temoignage.Id">
+                                        <div class="dropdown-menu show" @onclick:stopPropagation>
                                             <button type="button"
                                                     class="dropdown-item"
                                                     @onclick="@(() => ShowEditModal(temoignage))">
@@ -152,8 +158,7 @@
                                             </button>
                                             <button type="button"
                                                     class="dropdown-item delete"
-                                                    @onclick="@(async () => await DeleteTemoignage(temoignage.Id))"
-                                                    @onclick:stopPropagation="true">
+                                                    @onclick="@(async () => await DeleteTemoignage(temoignage.Id))">
                                                 <i class="fas fa-trash"></i> Supprimer
                                             </button>
                                         </div>

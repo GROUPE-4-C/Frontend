@@ -34,7 +34,13 @@
     <aside class="welcome-card static-sidebar" style="min-width: 300px; max-width: 300px;">
         <h3>🗓️ Événements Alumni</h3>
         <p>Découvrez les événements organisés par notre communauté d'alumni et participez à la vie du réseau.</p>
-        <button class="login-cta" onclick="openModal('createEventModal')">
+        <button class="login-cta @(currentUserId == null ? "disabled-btn" : "")"
+                onclick="@(currentUserId != null ? "openModal('createEventModal')" : null)"
+                disabled="@(currentUserId == null)">
+            @if (currentUserId == null)
+            {
+                <i class="fas fa-lock"></i>
+            }
             <i class="fas fa-plus"></i>
             Créer un événement
         </button>

@@ -35,7 +35,13 @@
     <aside class="welcome-card static-sidebar" style="min-width: 300px; max-width: 300px;">
         <h3>💼 Offres d'emploi Alumni</h3>
         <p>Découvrez les opportunités professionnelles partagées par notre communauté d'alumni.</p>
-        <button class="login-cta" onclick="openModal('createEmploiModal')">
+        <button class="login-cta @(currentUser == null ? "disabled-btn" : "")"
+                onclick="@(currentUser != null ? "openModal('createEmploiModal')" : null)"
+                disabled="@(currentUser == null)">
+            @if (currentUser == null)
+            {
+                <i class="fas fa-lock"></i>
+            }
             <i class="fas fa-plus"></i>
             Publier une offre
         </button>
