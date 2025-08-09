@@ -165,47 +165,224 @@
         <!-- Section Événements -->
         <section class="events-section">
             <div class="section-header">
-                <h3><i class="fas fa-calendar-alt"></i> Mes Événements</h3>
+                <h3><i class="fas fa-calendar-alt"></i> Événements</h3>
             </div>
 
             @if (events == null)
             {
-                <div class="loading-content">
-                    <div class="spinner"></div>
+                <div class="loading-state">
+                    <div class="loading-spinner"></div>
                     <p>Chargement des événements...</p>
                 </div>
             }
             else if (events.Count == 0)
             {
                 <div class="empty-state">
-                    <div class="empty-icon">
-                        <i class="fas fa-calendar-alt"></i>
-                    </div>
-                    <h4>Aucun événement</h4>
-                    <p>Organisez ou participez à des événements pour développer votre réseau</p>
+                    <i class="fas fa-calendar-alt"></i>
+                    <h3>Aucun événement</h3>
+                    <p>Aucun événement partagé pour le moment</p>
                 </div>
             }
             else
             {
-                <div class="events-grid">
-                    @foreach (var ev in events)
+                <div class="main-feed">
+                    @foreach (var ev in events.OrderByDescending(e => e.Date))
                     {
-                        <div class="event-card enhanced">
-                            <div class="event-date-badge">
-                                <div class="date-day">@ev.Date.Day</div>
-                                <div class="date-month">@ev.Date.ToString("MMM")</div>
-                            </div>
-                            <div class="event-content">
-                                <h4 class="event-title">@ev.Title</h4>
-                                <div class="event-meta">
-                                    <div class="event-location">
-                                        <i class="fas fa-map-marker-alt"></i>
-                                        <span>@ev.Location</span>
+                        <article class="post event-card">
+                            <div class="post-header">
+                                <div class="post-avatar event-avatar">
+                                    <i class="fas fa-calendar-alt"></i>
+                                </div>
+                                <div class="post-author-info">
+                                    <div class="post-author-name">@ev.Title</div>
+                                    <div class="post-author-title">
+                                        Organisé par <strong>@ev.Organizer</strong>
+                                    </div>
+                                    <div class="post-time">
+                                        <i class="fas fa-clock"></i>
+                                        <span>@ev.Date.ToString("dd MMMM yyyy à HH:mm")</span>
                                     </div>
                                 </div>
-                                <p class="event-description">@ev.Description</p>
                             </div>
-                        </div>
+
+                            <div class="post-content">
+                                <div class="testimonial-badge event-badge">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    Événement
+                                </div>
+
+                                <h3 class="event-title">@ev.Title</h3>
+
+                                @if (!string.IsNullOrEmpty(ev.ImageUrl))
+                                {
+                                    <div class="event-image-container">
+                                        <img src="@($"http://localhost:5175{ev.ImageUrl}")"
+                                             alt="Image de l'événement @ev.Title"
+                                             class="event-image" />
+                                    </div>
+                                }
+
+                                <div class="event-info-grid">
+                                    <div class="event-info-item">
+                                        <i class="fas fa-calendar-day"></i>
+                                        <div>
+                                            <strong>Date & Heure</strong>
+                                            <span>@ev.Date.ToString("dddd dd MMMM yyyy")</span>
+                                            <span>à @ev.Date.ToString("HH:mm")</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="event-info-item">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        <div>
+                                            <strong>Lieu</strong>
+                                            <span>@ev.Location</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="event-info-item">
+                                        <i class="fas fa-user-tie"></i>
+                                        <div>
+                                            <strong>Organisateur</strong>
+                                            <span>@ev.Organizer</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="event-description">
+                                    <h4><i class="fas fa-info-circle"></i> Description</h4>
+                                    <p>@ev.Description</p>
+                                </div>
+
+                                <div class="event-creator-info">
+                                    <small>
+                                        <i class="fas fa-user"></i>
+                                        Créé par <strong>@ev.CreatorName</strong>
+                                        (<a href="mailto:@ev.CreatorEmail" class="creator-email">@ev.CreatorEmail</a>)
+                                    </small>
+                                </div>
+
+                                <div class="event-tags">
+                                    <span class="event-tag">#Événement</span>
+                                    <span class="event-tag">#Alumni</span>
+                                    <span class="event-tag">#@ev.Organizer.Replace(" ", "")</span>
+                                </div>
+                            </div>
+                        </article>
+                    }
+                </div>
+            }
+        </section>
+
+        <!-- Section Offres d'emploi -->
+        <section class="emplois-section">
+            <div class="section-header">
+                <h3><i class="fas fa-briefcase"></i> Offres d'emploi</h3>
+            </div>
+
+            @if (emplois == null)
+            {
+                <div class="loading-state">
+                    <div class="loading-spinner"></div>
+                    <p>Chargement des offres d'emploi...</p>
+                </div>
+            }
+            else if (emplois.Count == 0)
+            {
+                <div class="empty-state">
+                    <i class="fas fa-briefcase"></i>
+                    <h3>Aucune offre d'emploi</h3>
+                    <p>Aucune offre d'emploi partagée pour le moment</p>
+                </div>
+            }
+            else
+            {
+                <div class="main-feed">
+                    @foreach (var emploi in emplois.OrderByDescending(e => e.CreatedAt))
+                    {
+                        <article class="post emploi-card">
+                            <div class="post-header">
+                                <div class="post-avatar emploi-avatar">
+                                    <i class="fas fa-briefcase"></i>
+                                </div>
+                                <div class="post-author-info">
+                                    <div class="post-author-name">@emploi.Titre</div>
+                                    <div class="post-author-title">
+                                        <strong>@emploi.Entreprise</strong>
+                                    </div>
+                                    <div class="post-time">
+                                        <i class="fas fa-clock"></i>
+                                        <span>Publié le @emploi.CreatedAt.ToString("dd MMMM yyyy")</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="post-content">
+                                <div class="testimonial-badge emploi-badge">
+                                    <i class="fas fa-briefcase"></i>
+                                    Offre d'emploi
+                                </div>
+
+                                <h3 class="emploi-title">@emploi.Titre</h3>
+
+                                @if (!string.IsNullOrEmpty(emploi.ImageUrl))
+                                {
+                                    <div class="emploi-image-container">
+                                        <img src="http://localhost:5175@(emploi.ImageUrl)"
+                                             alt="Image de l'offre @emploi.Titre"
+                                             class="emploi-image" />
+                                    </div>
+                                }
+
+                                <div class="emploi-info-grid">
+                                    <div class="emploi-info-item">
+                                        <i class="fas fa-building"></i>
+                                        <div>
+                                            <strong>Entreprise</strong>
+                                            <span>@emploi.Entreprise</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="emploi-info-item">
+                                        <i class="@(emploi.EstActif ? "fas fa-check-circle text-success" : "fas fa-times-circle text-danger")"></i>
+                                        <div>
+                                            <strong>Statut</strong>
+                                            <span class="@(emploi.EstActif ? "text-success" : "text-danger")">
+                                                @(emploi.EstActif ? "Active" : "Inactive")
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div class="emploi-info-item">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        <div>
+                                            <strong>Localisation</strong>
+                                            <span>@emploi.Localisation</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="emploi-info-item">
+                                        <i class="fas fa-calendar-alt"></i>
+                                        <div>
+                                            <strong>Dates</strong>
+                                            <span>Du @emploi.DateDebut.ToString("dd MMMM yyyy")</span>
+                                            <span>Au @emploi.DateFin.ToString("dd MMMM yyyy")</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="emploi-description">
+                                    <h4><i class="fas fa-info-circle"></i> Description du poste</h4>
+                                    <p>@emploi.Description</p>
+                                </div>
+
+                                <div class="emploi-tags">
+                                    <span class="emploi-tag">#EmploiAlumni</span>
+                                    <span class="emploi-tag">#@emploi.Entreprise.Replace(" ", "")</span>
+                                    <span class="emploi-tag">#@emploi.Localisation.Replace(" ", "").Replace(",", "")</span>
+                                </div>
+                            </div>
+                        </article>
                     }
                 </div>
             }
@@ -214,54 +391,70 @@
         <!-- Section Témoignages -->
         <section class="testimonials-section">
             <div class="section-header">
-                <h3><i class="fas fa-star"></i> Mes Témoignages</h3>
+                <h3><i class="fas fa-quote-left"></i> Témoignages</h3>
             </div>
 
             @if (temoignages == null)
             {
-                <div class="loading-content">
-                    <div class="spinner"></div>
+                <div class="loading-state">
+                    <div class="loading-spinner"></div>
                     <p>Chargement des témoignages...</p>
                 </div>
             }
             else if (temoignages.Count == 0)
             {
                 <div class="empty-state">
-                    <div class="empty-icon">
-                        <i class="fas fa-star"></i>
-                    </div>
-                    <h4>Aucun témoignage</h4>
-                    <p>Partagez votre expérience pour inspirer d'autres alumni</p>
+                    <i class="fas fa-quote-left"></i>
+                    <h3>Aucun témoignage</h3>
+                    <p>Aucun témoignage partagé pour le moment</p>
                 </div>
             }
             else
             {
-                <div class="testimonials-list">
-                    @foreach (var temoignage in temoignages)
+                <div class="main-feed">
+                    @foreach (var temoignage in temoignages.OrderByDescending(t => t.Date))
                     {
-                        <div class="testimonial-card">
-                            <div class="testimonial-content">
-                                <div class="quote-mark">
+                        <article class="post testimonial-card">
+                            <div class="post-header">
+                                <div class="post-avatar testimonial-avatar">
                                     <i class="fas fa-quote-left"></i>
                                 </div>
-                                <p class="testimonial-text">@temoignage.Contenu</p>
-                            </div>
-                            <div class="testimonial-footer">
-                                <div class="testimonial-date">
-                                    <i class="fas fa-calendar"></i>
-                                    @temoignage.Date.ToString("dd MMM yyyy")
+                                <div class="post-author-info">
+                                    <div class="post-author-name">@temoignage.FullName</div>
+                                    <div class="post-author-title">@temoignage.Profession</div>
+                                    <div class="post-time">
+                                        <i class="fas fa-clock"></i>
+                                        <span>@temoignage.Date.ToString("dd MMMM yyyy")</span>
+                                    </div>
                                 </div>
+                            </div>
+
+                            <div class="post-content">
+                                <div class="testimonial-badge">
+                                    <i class="fas fa-quote-left"></i>
+                                    Témoignage
+                                </div>
+
+                                <div class="testimonial-body">
+                                    <p>@temoignage.Contenu</p>
+                                </div>
+
                                 @if (!string.IsNullOrEmpty(temoignage.MotsCles))
                                 {
                                     <div class="testimonial-tags">
                                         @foreach (var tag in temoignage.MotsCles.Split(','))
                                         {
-                                            <span class="tag">@tag.Trim()</span>
+                                            <span class="testimonial-tag">@tag.Trim()</span>
                                         }
                                     </div>
                                 }
+
+                                <div class="testimonial-promotion">
+                                    <i class="fas fa-graduation-cap"></i>
+                                    <span>Promotion @temoignage.Promotion</span>
+                                </div>
                             </div>
-                        </div>
+                        </article>
                     }
                 </div>
             }
@@ -272,6 +465,220 @@
 
 
 <style>
+    /* Styles pour les offres d'emploi */
+    .emploi-avatar {
+        background: linear-gradient(135deg, #3182ce, #2c5282);
+    }
+
+    .emploi-badge {
+        background: linear-gradient(135deg, #3182ce, #2c5282);
+    }
+
+    .emploi-info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 16px;
+        margin: 20px 0;
+        padding: 16px;
+        background: #f7fafc;
+        border-radius: 8px;
+    }
+
+    .emploi-info-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .emploi-info-item i {
+        color: #4a5568;
+        margin-top: 4px;
+    }
+
+    .emploi-description {
+        margin: 20px 0;
+        color: #4a5568;
+        line-height: 1.6;
+    }
+
+    .emploi-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 16px;
+    }
+
+    .emploi-tag {
+        background: #ebf8ff;
+        color: #2c5282;
+        padding: 4px 12px;
+        border-radius: 16px;
+        font-size: 0.9rem;
+    }
+
+    .text-success {
+        color: #38a169;
+    }
+
+    .text-danger {
+        color: #e53e3e;
+    }
+    /* Styles communs pour les cartes */
+    .post {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        margin-bottom: 24px;
+        padding: 20px;
+        transition: box-shadow 0.3s ease;
+        width: 121%;
+    }
+
+    .post:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .post-header {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 16px;
+    }
+
+    .post-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        margin-right: 16px;
+        flex-shrink: 0;
+    }
+
+    .event-avatar {
+        background: linear-gradient(135deg, #ed8936, #dd6b20);
+    }
+
+    .testimonial-avatar {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+    }
+
+    .post-author-info {
+        flex-grow: 1;
+    }
+
+    .post-author-name {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 4px;
+    }
+
+    .post-author-title {
+        color: #718096;
+        font-size: 0.95rem;
+    }
+
+    .post-time {
+        color: #a0aec0;
+        font-size: 0.9rem;
+        margin-top: 4px;
+    }
+
+    .testimonial-badge, .event-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        color: white;
+        margin-bottom: 16px;
+    }
+
+    .testimonial-badge {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+    }
+
+    .event-badge {
+        background: linear-gradient(135deg, #ed8936, #dd6b20);
+    }
+
+    /* Styles spécifiques pour les événements */
+    .event-info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 16px;
+        margin: 20px 0;
+        padding: 16px;
+        background: #f7fafc;
+        border-radius: 8px;
+    }
+
+    .event-info-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .event-info-item i {
+        color: #4a5568;
+        margin-top: 4px;
+    }
+
+    .event-description {
+        margin: 20px 0;
+        color: #4a5568;
+        line-height: 1.6;
+    }
+
+    .event-image-container {
+        margin: 16px 0;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .event-image {
+        width: 100%;
+        height: auto;
+        object-fit: cover;
+    }
+
+    /* Styles spécifiques pour les témoignages */
+    .testimonial-body {
+        font-size: 1.1rem;
+        line-height: 1.7;
+        color: #2d3748;
+        margin: 20px 0;
+        padding: 0 12px;
+        border-left: 4px solid #e2e8f0;
+    }
+
+    .testimonial-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 16px;
+    }
+
+    .testimonial-tag {
+        background: #edf2f7;
+        color: #4a5568;
+        padding: 4px 12px;
+        border-radius: 16px;
+        font-size: 0.9rem;
+    }
+
+    .testimonial-promotion {
+        margin-top: 16px;
+        color: #718096;
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
     .experience-list-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
